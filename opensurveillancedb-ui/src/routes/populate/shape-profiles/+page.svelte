@@ -1,7 +1,14 @@
 <script lang="ts">
 	import DataTable, { Head, Body, Row, Cell } from '@smui/data-table';
+	import ShapeIcon from '$lib/ShapeIcon.svelte';
+	import { getIconPublicUrl } from '$lib/storage';
+
 	let { data } = $props();
-	const shapeProfiles = $derived(data?.shapeProfiles ?? []);
+	const shapeProfiles = $derived((data?.shapeProfiles ?? []) as Array<{
+		id: string;
+		short_name: string;
+		icon?: string | null;
+	}>);
 </script>
 
 {#if shapeProfiles.length === 0}
@@ -16,12 +23,15 @@
 					<Cell style="width:100%;">Icon</Cell>
 				</Row>
 			</Head>
+
 			<Body>
 				{#each shapeProfiles as s (s.id)}
 					<Row>
 						<Cell>{s.short_name}</Cell>
 						<Cell><code>{s.id}</code></Cell>
-						<Cell>{s.icon ? s.icon : '-'}</Cell>
+						<Cell>
+							<ShapeIcon filename={s.icon ?? null} alt={s.short_name} size={64} />
+						</Cell>
 					</Row>
 				{/each}
 			</Body>

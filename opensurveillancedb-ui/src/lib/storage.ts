@@ -30,3 +30,29 @@ export function getIconPublicUrl(filename?: string | null): string | null {
     }
     return null;
 }
+
+export async function listIconFilenames(): Promise<string[]> {
+    const folder = (ICON_FOLDER ?? '').trim();
+    const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+
+    try {
+        const { data, error } = await supabase.storage.from(ICON_BUCKET).list(cleanFolder, {
+            limit: 1000,
+            offset: 0,
+            sortBy: { column: 'name', order: 'asc' }
+        });
+        console.info("Got icon list from bucket", ICON_BUCKET, "folder", cleanFolder, "count", data?.length ?? 0);
+
+        if (error) {
+            console.error('Error listing icon filenames:', error.message);
+            return [];
+        }
+
+        return (data ?? [])
+            .map((entry) => validateFilename(entry.name))
+            .filter((name): name is string => !!name);
+    } catch (e) {
+        console.error('Error listing icon filenames', e);
+        return [];
+    }
+}

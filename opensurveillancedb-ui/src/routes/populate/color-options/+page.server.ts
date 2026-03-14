@@ -1,7 +1,6 @@
-import type { PageServerLoad } from './$types';
 import { listDeviceColors } from '$lib/supabaseClient';
 
-export const load: PageServerLoad = async () => {
+export const load = async () => {
     const colors = await listDeviceColors();
     return { colors };
 };

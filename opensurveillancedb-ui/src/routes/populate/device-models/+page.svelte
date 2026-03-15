@@ -6,6 +6,8 @@
 	import CircularProgress from '@smui/circular-progress';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
 	import { sanitizeHref } from '$lib/url';
+	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
+	import { getErrorMessage } from '$lib/errors';
 	import { createDeviceModel, updateDeviceModel, deleteDeviceModel } from '$lib/supabaseClient';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import DeviceModelDialog from './DeviceModelDialog.svelte';
@@ -20,6 +22,7 @@
 	);
 	const colors = $derived((data?.colors ?? []) as Array<{ code: string; name: string }>);
 	const locations = $derived((data?.locations ?? []) as Array<{ code: string; name: string }>);
+	const canEdit = $derived(!!data?.user);
 
 	type DeviceModelDialogRef = {
 		openCreateDialog: () => void;
@@ -35,10 +38,21 @@
 		}) => void;
 	};
 
+	type ErrorSnackbarRef = {
+		show: (message: string) => void;
+	};
+
 	let dialogRef = $state(null) as DeviceModelDialogRef | null;
+	let errorSnackbarRef = $state(null) as ErrorSnackbarRef | null;
 	let deletingId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
 	let creatingPending = $state(false);
+
+	function showError(error: unknown, fallback: string) {
+		const message = getErrorMessage(error, fallback);
+		errorSnackbarRef?.show(message);
+		return message;
+	}
 
 	async function handleDialogSubmit(detail: {
 		mode: 'create' | 'edit';
@@ -51,42 +65,46 @@
 		color_ids: string[];
 		location_codes: string[];
 	}) {
-		if (detail.mode === 'create') {
-			creatingPending = true;
-			try {
-				await createDeviceModel({
-					name: detail.name,
-					manufacturer: detail.manufacturer,
-					shape_profile: detail.shape_profile,
-					datasheet_url: detail.datasheet_url,
-					product_url: detail.product_url,
-					color_ids: detail.color_ids,
-					location_codes: detail.location_codes
-				});
-				await invalidateAll();
-			} finally {
-				creatingPending = false;
-			}
-		} else {
-			if (!detail.originalId) {
-				throw new Error('Missing original ID for edit operation.');
-			}
+		try {
+			if (detail.mode === 'create') {
+				creatingPending = true;
+				try {
+					await createDeviceModel({
+						name: detail.name,
+						manufacturer: detail.manufacturer,
+						shape_profile: detail.shape_profile,
+						datasheet_url: detail.datasheet_url,
+						product_url: detail.product_url,
+						color_ids: detail.color_ids,
+						location_codes: detail.location_codes
+					});
+					await invalidateAll();
+				} finally {
+					creatingPending = false;
+				}
+			} else {
+				if (!detail.originalId) {
+					throw new Error('Missing original ID for edit operation.');
+				}
 
-			editingId = detail.originalId;
-			try {
-				await updateDeviceModel(detail.originalId, {
-					name: detail.name,
-					manufacturer: detail.manufacturer,
-					shape_profile: detail.shape_profile,
-					datasheet_url: detail.datasheet_url,
-					product_url: detail.product_url,
-					color_ids: detail.color_ids,
-					location_codes: detail.location_codes
-				});
-				await invalidateAll();
-			} finally {
-				editingId = null;
+				editingId = detail.originalId;
+				try {
+					await updateDeviceModel(detail.originalId, {
+						name: detail.name,
+						manufacturer: detail.manufacturer,
+						shape_profile: detail.shape_profile,
+						datasheet_url: detail.datasheet_url,
+						product_url: detail.product_url,
+						color_ids: detail.color_ids,
+						location_codes: detail.location_codes
+					});
+					await invalidateAll();
+				} finally {
+					editingId = null;
+				}
 			}
+		} catch (error) {
+			throw new Error(showError(error, 'Failed to save device model.'));
 		}
 	}
 
@@ -104,7 +122,7 @@
 			await deleteDeviceModel(id);
 			await invalidateAll();
 		} catch (error) {
-			alert(error instanceof Error ? error.message : 'Failed to delete device model.');
+			showError(error, 'Failed to delete device model.');
 		} finally {
 			deletingId = null;
 		}
@@ -124,26 +142,32 @@
 	}
 </script>
 
-<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
-	<Button
-		variant="raised"
-		color="primary"
-		onclick={() => dialogRef?.openCreateDialog()}
-		disabled={creatingPending || !!editingId || !!deletingId}
-	>
-		<Icon class="material-icons">add</Icon>
-		<Label>Create Device Model</Label>
-	</Button>
-</div>
+<ErrorSnackbar bind:this={errorSnackbarRef} />
 
-<DeviceModelDialog
-	bind:this={dialogRef}
-	{manufacturers}
-	{shapeProfiles}
-	{colors}
-	{locations}
-	onDialogSubmit={handleDialogSubmit}
-/>
+{#if canEdit}
+	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+		<Button
+			variant="raised"
+			color="primary"
+			onclick={() => dialogRef?.openCreateDialog()}
+			disabled={creatingPending || !!editingId || !!deletingId}
+		>
+			<Icon class="material-icons">add</Icon>
+			<Label>Create Device Model</Label>
+		</Button>
+	</div>
+{/if}
+
+{#if canEdit}
+	<DeviceModelDialog
+		bind:this={dialogRef}
+		{manufacturers}
+		{shapeProfiles}
+		{colors}
+		{locations}
+		onDialogSubmit={handleDialogSubmit}
+	/>
+{/if}
 
 {#if deviceInfos.length === 0}
 	<p><em>No device models found.</em></p>
@@ -174,7 +198,9 @@
 					<Cell style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
 						>Product</Cell
 					>
-					<Cell style="width:7%;">Actions</Cell>
+					{#if canEdit}
+						<Cell style="width:7%;">Actions</Cell>
+					{/if}
 				</Row>
 			</Head>
 
@@ -236,30 +262,32 @@
 								-
 							{/if}
 						</Cell>
-						<Cell>
-							{#if editingId === m.id}
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-							{:else}
-								<IconButton
-									class="material-icons"
-									onclick={() => openEditDialog(m)}
-									aria-label="Edit"
-									title="Edit"
-									disabled={creatingPending || !!deletingId}>edit</IconButton
-								>
-							{/if}
-							{#if deletingId === m.id}
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-							{:else}
-								<IconButton
-									class="material-icons"
-									onclick={() => handleDeleteDeviceModel(m.id)}
-									aria-label="Delete"
-									title="Delete"
-									disabled={creatingPending || !!editingId}>delete</IconButton
-								>
-							{/if}
-						</Cell>
+						{#if canEdit}
+							<Cell>
+								{#if editingId === m.id}
+									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								{:else}
+									<IconButton
+										class="material-icons"
+										onclick={() => openEditDialog(m)}
+										aria-label="Edit"
+										title="Edit"
+										disabled={creatingPending || !!deletingId}>edit</IconButton
+									>
+								{/if}
+								{#if deletingId === m.id}
+									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								{:else}
+									<IconButton
+										class="material-icons"
+										onclick={() => handleDeleteDeviceModel(m.id)}
+										aria-label="Delete"
+										title="Delete"
+										disabled={creatingPending || !!editingId}>delete</IconButton
+									>
+								{/if}
+							</Cell>
+						{/if}
 					</Row>
 				{/each}
 				{#if creatingPending}
@@ -272,9 +300,11 @@
 						<Cell></Cell>
 						<Cell></Cell>
 						<Cell></Cell>
-						<Cell>
-							<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-						</Cell>
+						{#if canEdit}
+							<Cell>
+								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+							</Cell>
+						{/if}
 					</Row>
 				{/if}
 			</Body>

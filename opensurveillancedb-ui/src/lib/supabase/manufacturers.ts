@@ -1,9 +1,13 @@
 import { supabase } from './client';
 import { SchemaName } from './schema';
+import type { Database } from '../supabaseTypes';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { DeviceManufacturer } from './types';
 
-export async function listDeviceManufacturers(): Promise<DeviceManufacturer[]> {
-    const { data, error } = await supabase
+export async function listDeviceManufacturers(
+    client: SupabaseClient<Database> = supabase
+): Promise<DeviceManufacturer[]> {
+    const { data, error } = await client
         .schema(SchemaName)
         .from('device_manufacturer')
         .select<'device_manufacturer', DeviceManufacturer>();

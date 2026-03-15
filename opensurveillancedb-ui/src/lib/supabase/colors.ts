@@ -1,9 +1,11 @@
 import { supabase } from './client';
 import { SchemaName } from './schema';
+import type { Database } from '../supabaseTypes';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Color } from './types';
 
-export async function listDeviceColors(): Promise<Color[]> {
-    const { data, error } = await supabase.schema(SchemaName).from('color').select<'color', Color>();
+export async function listDeviceColors(client: SupabaseClient<Database> = supabase): Promise<Color[]> {
+    const { data, error } = await client.schema(SchemaName).from('color').select<'color', Color>();
 
     if (error) {
         console.error('Error loading device colors:', error.message);

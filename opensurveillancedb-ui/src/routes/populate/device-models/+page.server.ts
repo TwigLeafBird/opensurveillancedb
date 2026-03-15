@@ -5,14 +5,15 @@ import {
     listDeviceColors,
     listDeviceLocations
 } from '$lib/supabaseClient';
+import type { PageServerLoad } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
     const [deviceInfos, manufacturers, shapeProfiles, colors, locations] = await Promise.all([
-        listDeviceInfos(),
-        listDeviceManufacturers(),
-        listDeviceShapeProfiles(),
-        listDeviceColors(),
-        listDeviceLocations()
+        listDeviceInfos(locals.supabase),
+        listDeviceManufacturers(locals.supabase),
+        listDeviceShapeProfiles(locals.supabase),
+        listDeviceColors(locals.supabase),
+        listDeviceLocations(locals.supabase)
     ]);
 
     return {

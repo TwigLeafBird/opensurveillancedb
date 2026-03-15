@@ -1,9 +1,13 @@
 import { supabase } from './client';
 import { SchemaName } from './schema';
+import type { Database } from '../supabaseTypes';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { DeviceInfo, DeviceModel } from './types';
 
-export async function listDeviceModels(): Promise<DeviceModel[]> {
-    const { data, error } = await supabase
+export async function listDeviceModels(
+    client: SupabaseClient<Database> = supabase
+): Promise<DeviceModel[]> {
+    const { data, error } = await client
         .schema(SchemaName)
         .from('device_model')
         .select<'device_model', DeviceModel>();
@@ -16,11 +20,11 @@ export async function listDeviceModels(): Promise<DeviceModel[]> {
     return data ?? [];
 }
 
-export async function listDeviceInfos(): Promise<DeviceInfo[]> {
+export async function listDeviceInfos(client: SupabaseClient<Database> = supabase): Promise<DeviceInfo[]> {
     const selectQuery =
         '*, manufacturer (*), device_color_option (*, color (*)), device_possible_location (*, device_location (*)), device_shape_profile (*)';
 
-    const { data, error } = await supabase.schema(SchemaName).from('device_model').select(selectQuery);
+    const { data, error } = await client.schema(SchemaName).from('device_model').select(selectQuery);
 
     if (error) {
         console.error('Error loading device infos:', error.message);

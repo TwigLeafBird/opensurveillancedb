@@ -4,6 +4,8 @@
 	import Button, { Icon, Label } from '@smui/button';
 	import IconButton from '@smui/icon-button';
 	import CircularProgress from '@smui/circular-progress';
+	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
+	import { getErrorMessage } from '$lib/errors';
 	import {
 		createDeviceManufacturer,
 		updateDeviceManufacturer,
@@ -19,6 +21,7 @@
 			alternate_names?: string[] | null;
 		}>
 	);
+	const canEdit = $derived(!!data?.user);
 
 	type ManufacturerDialogRef = {
 		openCreateDialog: () => void;
@@ -29,10 +32,21 @@
 		}) => void;
 	};
 
+	type ErrorSnackbarRef = {
+		show: (message: string) => void;
+	};
+
 	let dialogRef = $state(null) as ManufacturerDialogRef | null;
+	let errorSnackbarRef = $state(null) as ErrorSnackbarRef | null;
 	let deletingId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
 	let creatingPending = $state(false);
+
+	function showError(error: unknown, fallback: string) {
+		const message = getErrorMessage(error, fallback);
+		errorSnackbarRef?.show(message);
+		return message;
+	}
 
 	async function handleDialogSubmit(detail: {
 		mode: 'create' | 'edit';
@@ -40,34 +54,38 @@
 		name: string;
 		alternate_names: string[] | null;
 	}) {
-		if (detail.mode === 'create') {
-			creatingPending = true;
-			try {
-				await createDeviceManufacturer({
-					id: crypto.randomUUID(),
-					name: detail.name,
-					alternate_names: detail.alternate_names
-				});
-				await invalidateAll();
-			} finally {
-				creatingPending = false;
-			}
-		} else {
-			if (!detail.originalId) {
-				throw new Error('Missing original ID for edit operation.');
-			}
+		try {
+			if (detail.mode === 'create') {
+				creatingPending = true;
+				try {
+					await createDeviceManufacturer({
+						id: crypto.randomUUID(),
+						name: detail.name,
+						alternate_names: detail.alternate_names
+					});
+					await invalidateAll();
+				} finally {
+					creatingPending = false;
+				}
+			} else {
+				if (!detail.originalId) {
+					throw new Error('Missing original ID for edit operation.');
+				}
 
-			editingId = detail.originalId;
-			try {
-				await updateDeviceManufacturer(detail.originalId, {
-					id: detail.originalId,
-					name: detail.name,
-					alternate_names: detail.alternate_names
-				});
-				await invalidateAll();
-			} finally {
-				editingId = null;
+				editingId = detail.originalId;
+				try {
+					await updateDeviceManufacturer(detail.originalId, {
+						id: detail.originalId,
+						name: detail.name,
+						alternate_names: detail.alternate_names
+					});
+					await invalidateAll();
+				} finally {
+					editingId = null;
+				}
 			}
+		} catch (error) {
+			throw new Error(showError(error, 'Failed to save manufacturer.'));
 		}
 	}
 
@@ -85,26 +103,32 @@
 			await deleteDeviceManufacturer(id);
 			await invalidateAll();
 		} catch (error) {
-			alert(error instanceof Error ? error.message : 'Failed to delete manufacturer.');
+			showError(error, 'Failed to delete manufacturer.');
 		} finally {
 			deletingId = null;
 		}
 	}
 </script>
 
-<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
-	<Button
-		variant="raised"
-		color="primary"
-		onclick={() => dialogRef?.openCreateDialog()}
-		disabled={creatingPending || !!editingId || !!deletingId}
-	>
-		<Icon class="material-icons">add</Icon>
-		<Label>Create Manufacturer</Label>
-	</Button>
-</div>
+<ErrorSnackbar bind:this={errorSnackbarRef} />
 
-<ManufacturerDialog bind:this={dialogRef} onDialogSubmit={handleDialogSubmit} />
+{#if canEdit}
+	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+		<Button
+			variant="raised"
+			color="primary"
+			onclick={() => dialogRef?.openCreateDialog()}
+			disabled={creatingPending || !!editingId || !!deletingId}
+		>
+			<Icon class="material-icons">add</Icon>
+			<Label>Create Manufacturer</Label>
+		</Button>
+	</div>
+{/if}
+
+{#if canEdit}
+	<ManufacturerDialog bind:this={dialogRef} onDialogSubmit={handleDialogSubmit} />
+{/if}
 
 {#if manufacturers.length === 0}
 	<p><em>No manufacturers found.</em></p>
@@ -116,7 +140,9 @@
 					<Cell>Name</Cell>
 					<Cell>ID</Cell>
 					<Cell style="width:100%;">Alternate Names</Cell>
-					<Cell>Actions</Cell>
+					{#if canEdit}
+						<Cell>Actions</Cell>
+					{/if}
 				</Row>
 			</Head>
 			<Body>
@@ -125,30 +151,32 @@
 						<Cell>{m.name}</Cell>
 						<Cell><code>{m.id}</code></Cell>
 						<Cell>{m.alternate_names ? m.alternate_names.join(', ') : '-'}</Cell>
-						<Cell>
-							{#if editingId === m.id}
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-							{:else}
-								<IconButton
-									class="material-icons"
-									onclick={() => dialogRef?.openEditDialog(m)}
-									aria-label="Edit"
-									title="Edit"
-									disabled={creatingPending || !!deletingId}>edit</IconButton
-								>
-							{/if}
-							{#if deletingId === m.id}
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-							{:else}
-								<IconButton
-									class="material-icons"
-									onclick={() => handleDeleteManufacturer(m.id)}
-									aria-label="Delete"
-									title="Delete"
-									disabled={creatingPending || !!editingId}>delete</IconButton
-								>
-							{/if}
-						</Cell>
+						{#if canEdit}
+							<Cell>
+								{#if editingId === m.id}
+									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								{:else}
+									<IconButton
+										class="material-icons"
+										onclick={() => dialogRef?.openEditDialog(m)}
+										aria-label="Edit"
+										title="Edit"
+										disabled={creatingPending || !!deletingId}>edit</IconButton
+									>
+								{/if}
+								{#if deletingId === m.id}
+									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								{:else}
+									<IconButton
+										class="material-icons"
+										onclick={() => handleDeleteManufacturer(m.id)}
+										aria-label="Delete"
+										title="Delete"
+										disabled={creatingPending || !!editingId}>delete</IconButton
+									>
+								{/if}
+							</Cell>
+						{/if}
 					</Row>
 				{/each}
 				{#if creatingPending}
@@ -156,9 +184,11 @@
 						<Cell></Cell>
 						<Cell><code></code></Cell>
 						<Cell></Cell>
-						<Cell>
-							<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-						</Cell>
+						{#if canEdit}
+							<Cell>
+								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+							</Cell>
+						{/if}
 					</Row>
 				{/if}
 			</Body>

@@ -32,6 +32,7 @@
 		"@smui/dialog": "^8.0.3",
 		"@smui/icon-button": "^8.0.3",
 		"@smui/select": "^8.0.3",
+		"@smui/snackbar": "^8.0.3",
 		"@smui/tab": "^8.0.3",
 		"@smui/tab-bar": "^8.0.3",
 		"@smui/top-app-bar": "^8.0.3",

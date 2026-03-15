@@ -1,9 +1,13 @@
 import { supabase } from './client';
 import { SchemaName } from './schema';
+import type { Database } from '../supabaseTypes';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { DeviceShapeProfile } from './types';
 
-export async function listDeviceShapeProfiles(): Promise<DeviceShapeProfile[]> {
-    const { data, error } = await supabase
+export async function listDeviceShapeProfiles(
+    client: SupabaseClient<Database> = supabase
+): Promise<DeviceShapeProfile[]> {
+    const { data, error } = await client
         .schema(SchemaName)
         .from('device_shape_profile')
         .select<'device_shape_profile', DeviceShapeProfile>();

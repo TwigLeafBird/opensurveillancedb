@@ -1,9 +1,13 @@
 import { supabase } from './client';
 import { SchemaName } from './schema';
+import type { Database } from '../supabaseTypes';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { DeviceLocation, DevicePossibleLocation } from './types';
 
-export async function listDeviceLocations(): Promise<DeviceLocation[]> {
-    const { data, error } = await supabase
+export async function listDeviceLocations(
+    client: SupabaseClient<Database> = supabase
+): Promise<DeviceLocation[]> {
+    const { data, error } = await client
         .schema(SchemaName)
         .from('device_location')
         .select<'device_location', DeviceLocation>();

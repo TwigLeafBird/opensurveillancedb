@@ -5,6 +5,8 @@
 	import IconButton from '@smui/icon-button';
 	import CircularProgress from '@smui/circular-progress';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
+	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
+	import { getErrorMessage } from '$lib/errors';
 	import {
 		createDeviceShapeProfile,
 		deleteDeviceShapeProfile,
@@ -20,6 +22,7 @@
 			icon?: string | null;
 		}>
 	);
+	const canEdit = $derived(!!data?.user);
 
 	type ShapeProfileDialogRef = {
 		openCreateDialog: () => void;
@@ -30,10 +33,21 @@
 		}) => void;
 	};
 
+	type ErrorSnackbarRef = {
+		show: (message: string) => void;
+	};
+
 	let dialogRef = $state(null) as ShapeProfileDialogRef | null;
+	let errorSnackbarRef = $state(null) as ErrorSnackbarRef | null;
 	let deletingId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
 	let creatingPending = $state(false);
+
+	function showError(error: unknown, fallback: string) {
+		const message = getErrorMessage(error, fallback);
+		errorSnackbarRef?.show(message);
+		return message;
+	}
 
 	async function handleDialogSubmit(detail: {
 		mode: 'create' | 'edit';
@@ -41,34 +55,38 @@
 		short_name: string;
 		icon: string | null;
 	}) {
-		if (detail.mode === 'create') {
-			creatingPending = true;
-			try {
-				await createDeviceShapeProfile({
-					id: crypto.randomUUID(),
-					short_name: detail.short_name,
-					icon: detail.icon
-				});
-				await invalidateAll();
-			} finally {
-				creatingPending = false;
-			}
-		} else {
-			if (!detail.originalId) {
-				throw new Error('Missing original ID for edit operation.');
-			}
+		try {
+			if (detail.mode === 'create') {
+				creatingPending = true;
+				try {
+					await createDeviceShapeProfile({
+						id: crypto.randomUUID(),
+						short_name: detail.short_name,
+						icon: detail.icon
+					});
+					await invalidateAll();
+				} finally {
+					creatingPending = false;
+				}
+			} else {
+				if (!detail.originalId) {
+					throw new Error('Missing original ID for edit operation.');
+				}
 
-			editingId = detail.originalId;
-			try {
-				await updateDeviceShapeProfile(detail.originalId, {
-					id: detail.originalId,
-					short_name: detail.short_name,
-					icon: detail.icon
-				});
-				await invalidateAll();
-			} finally {
-				editingId = null;
+				editingId = detail.originalId;
+				try {
+					await updateDeviceShapeProfile(detail.originalId, {
+						id: detail.originalId,
+						short_name: detail.short_name,
+						icon: detail.icon
+					});
+					await invalidateAll();
+				} finally {
+					editingId = null;
+				}
 			}
+		} catch (error) {
+			throw new Error(showError(error, 'Failed to save shape profile.'));
 		}
 	}
 
@@ -86,26 +104,32 @@
 			await deleteDeviceShapeProfile(id);
 			await invalidateAll();
 		} catch (error) {
-			alert(error instanceof Error ? error.message : 'Failed to delete shape profile.');
+			showError(error, 'Failed to delete shape profile.');
 		} finally {
 			deletingId = null;
 		}
 	}
 </script>
 
-<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
-	<Button
-		variant="raised"
-		color="primary"
-		onclick={() => dialogRef?.openCreateDialog()}
-		disabled={creatingPending || !!editingId || !!deletingId}
-	>
-		<Icon class="material-icons">add</Icon>
-		<Label>Create Shape Profile</Label>
-	</Button>
-</div>
+<ErrorSnackbar bind:this={errorSnackbarRef} />
 
-<ShapeProfileDialog bind:this={dialogRef} onDialogSubmit={handleDialogSubmit} />
+{#if canEdit}
+	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+		<Button
+			variant="raised"
+			color="primary"
+			onclick={() => dialogRef?.openCreateDialog()}
+			disabled={creatingPending || !!editingId || !!deletingId}
+		>
+			<Icon class="material-icons">add</Icon>
+			<Label>Create Shape Profile</Label>
+		</Button>
+	</div>
+{/if}
+
+{#if canEdit}
+	<ShapeProfileDialog bind:this={dialogRef} onDialogSubmit={handleDialogSubmit} />
+{/if}
 
 {#if shapeProfiles.length === 0}
 	<p><em>No shape profiles found.</em></p>
@@ -117,7 +141,9 @@
 					<Cell>Short Name</Cell>
 					<Cell>ID</Cell>
 					<Cell style="width:100%;">Icon</Cell>
-					<Cell>Actions</Cell>
+					{#if canEdit}
+						<Cell>Actions</Cell>
+					{/if}
 				</Row>
 			</Head>
 
@@ -129,30 +155,32 @@
 						<Cell>
 							<ShapeIcon filename={s.icon ?? null} alt={s.short_name} size={64} />
 						</Cell>
-						<Cell>
-							{#if editingId === s.id}
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-							{:else}
-								<IconButton
-									class="material-icons"
-									onclick={() => dialogRef?.openEditDialog(s)}
-									aria-label="Edit"
-									title="Edit"
-									disabled={creatingPending || !!deletingId}>edit</IconButton
-								>
-							{/if}
-							{#if deletingId === s.id}
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-							{:else}
-								<IconButton
-									class="material-icons"
-									onclick={() => handleDeleteShapeProfile(s.id)}
-									aria-label="Delete"
-									title="Delete"
-									disabled={creatingPending || !!editingId}>delete</IconButton
-								>
-							{/if}
-						</Cell>
+						{#if canEdit}
+							<Cell>
+								{#if editingId === s.id}
+									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								{:else}
+									<IconButton
+										class="material-icons"
+										onclick={() => dialogRef?.openEditDialog(s)}
+										aria-label="Edit"
+										title="Edit"
+										disabled={creatingPending || !!deletingId}>edit</IconButton
+									>
+								{/if}
+								{#if deletingId === s.id}
+									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								{:else}
+									<IconButton
+										class="material-icons"
+										onclick={() => handleDeleteShapeProfile(s.id)}
+										aria-label="Delete"
+										title="Delete"
+										disabled={creatingPending || !!editingId}>delete</IconButton
+									>
+								{/if}
+							</Cell>
+						{/if}
 					</Row>
 				{/each}
 				{#if creatingPending}
@@ -160,9 +188,11 @@
 						<Cell></Cell>
 						<Cell><code></code></Cell>
 						<Cell></Cell>
-						<Cell>
-							<CircularProgress style="height: 32px; width: 32px;" indeterminate />
-						</Cell>
+						{#if canEdit}
+							<Cell>
+								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+							</Cell>
+						{/if}
 					</Row>
 				{/if}
 			</Body>

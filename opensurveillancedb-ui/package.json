@@ -30,6 +30,7 @@
 		"@smui/circular-progress": "^8.0.3",
 		"@smui/data-table": "^8.0.3",
 		"@smui/dialog": "^8.0.3",
+		"@smui/drawer": "^8.0.3",
 		"@smui/icon-button": "^8.0.3",
 		"@smui/select": "^8.0.3",
 		"@smui/snackbar": "^8.0.3",

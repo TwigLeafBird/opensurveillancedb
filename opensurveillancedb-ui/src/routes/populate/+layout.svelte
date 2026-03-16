@@ -1,10 +1,8 @@
 <script lang="ts">
-	import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar';
+	import { goto } from '$app/navigation';
 	import TabBar from '@smui/tab-bar';
 	import Tab, { Label } from '@smui/tab';
-	import Button from '@smui/button';
 	import { page } from '$app/state';
-	import { redirect } from '@sveltejs/kit';
 
 	type TabEntry = {
 		route: string;
@@ -20,20 +18,22 @@
 	];
 
 	let { children } = $props();
-	if (page.route.id === '/populate') {
-		redirect(308, `/populate/${tabs[0].route}`);
-	}
-	let currentlyModifying = page.route.id?.replace('/populate/', '');
-	let active = $state(tabs.find((tab) => tab.route === currentlyModifying));
+	let active = $state<TabEntry | undefined>(tabs[0]);
+
+	$effect(() => {
+		// Redirect to first tab if at /populate
+		if (page.url.pathname === '/populate') {
+			void goto(`/populate/${tabs[0].route}`, { replaceState: true });
+		}
+	});
+
+	$effect(() => {
+		// Update active tab based on URL
+		const currentTabRoute = page.route.id?.replace('/populate/', '');
+		active = tabs.find((tab) => tab.route === currentTabRoute) ?? tabs[0];
+	});
 </script>
 
-<TopAppBar variant="static">
-	<Row>
-		<Section>
-			<Title>Populate Database</Title>
-		</Section>
-	</Row>
-</TopAppBar>
 <TabBar {tabs} key={(tab) => tab.route} bind:active>
 	{#snippet tab(tabEntry: TabEntry)}
 		<Tab tab={tabEntry} href={`/populate/${tabEntry.route}`}>

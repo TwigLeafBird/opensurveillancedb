@@ -2,14 +2,41 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import Button, { Label } from '@smui/button';
+	import Drawer, { Content } from '@smui/drawer';
+	import List, { Item, Text } from '@smui/list';
+	import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import { supabase } from '$lib/supabaseClient';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 
+	type SectionEntry = {
+		href: string;
+		label: string;
+		matches: (pathname: string) => boolean;
+	};
+
 	let { data, children } = $props();
 	let signingIn = $state(false);
 	let signingOut = $state(false);
+
+	const sections: SectionEntry[] = [
+		{
+			href: '/',
+			label: 'About',
+			matches: (pathname) => pathname === '/'
+		},
+		{
+			href: '/identify',
+			label: 'Device Identifier',
+			matches: (pathname) => pathname.startsWith('/identify')
+		},
+		{
+			href: '/populate/device-models',
+			label: 'Table View',
+			matches: (pathname) => pathname.startsWith('/populate')
+		}
+	];
 
 	const signedInLabel = $derived(
 		data?.user?.email ??
@@ -46,33 +73,59 @@
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
-<div
-	style="position:fixed; top:12px; right:12px; z-index:1000; display:flex; align-items:center; gap:8px;"
->
-	{#if data?.user}
-		<span style="font-size:1rem; opacity:1;">Signed in as {signedInLabel}</span>
-		<Button
-			variant="outlined"
-			color="primary"
-			onclick={signOut}
-			disabled={signingOut}
-			style="color:#fff; border-color:#fff;"
-		>
-			<Label>{signingOut ? 'Logging out…' : 'Logout'}</Label>
-		</Button>
-	{:else}
-		<Button
-			variant="outlined"
-			color="primary"
-			onclick={signInWithGitHub}
-			disabled={signingIn}
-			style="color:#fff; border-color:#fff;"
-		>
-			<Label>{signingIn ? 'Redirecting…' : 'Sign in with GitHub'}</Label>
-		</Button>
-	{/if}
+<div style="display:flex; height:100vh; flex-direction:column;">
+	<TopAppBar variant="static">
+		<Row>
+			<Section>
+				<Title>opensurveillancedb</Title>
+			</Section>
+			<Section align="end" style="gap:8px; padding-right:16px;">
+				{#if data?.user}
+					<span style="font-size:0.95rem; opacity:1; white-space:nowrap;"
+						>Signed in as {signedInLabel}</span
+					>
+					<Button
+						variant="outlined"
+						color="primary"
+						onclick={signOut}
+						disabled={signingOut}
+						style="color:#fff; border-color:#fff;"
+					>
+						<Label>{signingOut ? 'Logging out…' : 'Logout'}</Label>
+					</Button>
+				{:else}
+					<Button
+						variant="outlined"
+						color="primary"
+						onclick={signInWithGitHub}
+						disabled={signingIn}
+						style="color:#fff; border-color:#fff;"
+					>
+						<Label>{signingIn ? 'Redirecting…' : 'Sign in with GitHub'}</Label>
+					</Button>
+				{/if}
+			</Section>
+		</Row>
+	</TopAppBar>
+
+	<div style="display:flex; min-height:0; flex:1; align-items:stretch;">
+		<Drawer style="height:100%; align-self:stretch;">
+			<Content>
+				<List>
+					{#each sections as section}
+						<Item href={section.href} activated={section.matches(page.url.pathname)}>
+							<Text>{section.label}</Text>
+						</Item>
+					{/each}
+				</List>
+			</Content>
+		</Drawer>
+
+		<div style="min-width:0; flex:1;">
+			{@render children()}
+		</div>
+	</div>
 </div>
-{@render children()}
 
 <div style="display:none">
 	{#each locales as locale}

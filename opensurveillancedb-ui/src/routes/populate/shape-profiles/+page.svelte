@@ -7,6 +7,7 @@
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
 	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
 	import { getErrorMessage } from '$lib/errors';
+	import { uploadIconFile, deleteIconFile } from '$lib/storage';
 	import {
 		createDeviceShapeProfile,
 		deleteDeviceShapeProfile,
@@ -53,18 +54,33 @@
 		mode: 'create' | 'edit';
 		originalId: string | null;
 		short_name: string;
-		icon: string | null;
+		iconFile: File | null;
+		selectedIcon: string | null;
 	}) {
 		try {
 			if (detail.mode === 'create') {
 				creatingPending = true;
+				let uploadedIcon: string | null = null;
 				try {
+					if (detail.iconFile) {
+						uploadedIcon = await uploadIconFile(detail.iconFile, detail.short_name);
+					}
+
 					await createDeviceShapeProfile({
 						id: crypto.randomUUID(),
 						short_name: detail.short_name,
-						icon: detail.icon
+						icon: uploadedIcon
 					});
 					await invalidateAll();
+				} catch (error) {
+					if (uploadedIcon) {
+						try {
+							await deleteIconFile(uploadedIcon);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					throw error;
 				} finally {
 					creatingPending = false;
 				}
@@ -74,13 +90,38 @@
 				}
 
 				editingId = detail.originalId;
+				let uploadedIcon: string | null = null;
+				const existingShapeProfile = shapeProfiles.find(
+					(shapeProfile) => shapeProfile.id === detail.originalId
+				);
+				const currentIcon = existingShapeProfile?.icon ?? null;
 				try {
+					let nextIcon = detail.selectedIcon;
+					if (detail.iconFile) {
+						uploadedIcon = await uploadIconFile(detail.iconFile, detail.short_name);
+						nextIcon = uploadedIcon;
+					}
+
 					await updateDeviceShapeProfile(detail.originalId, {
 						id: detail.originalId,
 						short_name: detail.short_name,
-						icon: detail.icon
+						icon: nextIcon
 					});
+
+					if (uploadedIcon && currentIcon && currentIcon !== uploadedIcon) {
+						await deleteIconFile(currentIcon);
+					}
+
 					await invalidateAll();
+				} catch (error) {
+					if (uploadedIcon) {
+						try {
+							await deleteIconFile(uploadedIcon);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					throw error;
 				} finally {
 					editingId = null;
 				}

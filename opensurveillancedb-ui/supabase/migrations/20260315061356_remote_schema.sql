@@ -311,7 +311,35 @@ with check (true);
   on "storage"."objects"
   as permissive
   for select
-  to anon
+  to public
+using ((bucket_id = 'shape_profiles'::text));
+
+
+
+  create policy "Allow authenticated uploads to shape_profiles"
+  on "storage"."objects"
+  as permissive
+  for insert
+  to authenticated
+with check ((bucket_id = 'shape_profiles'::text));
+
+
+
+  create policy "Allow authenticated updates in shape_profiles"
+  on "storage"."objects"
+  as permissive
+  for update
+  to authenticated
+using ((bucket_id = 'shape_profiles'::text))
+with check ((bucket_id = 'shape_profiles'::text));
+
+
+
+  create policy "Allow authenticated deletes from shape_profiles"
+  on "storage"."objects"
+  as permissive
+  for delete
+  to authenticated
 using ((bucket_id = 'shape_profiles'::text));
 
 

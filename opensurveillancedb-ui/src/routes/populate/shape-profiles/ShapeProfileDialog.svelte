@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import Button from '@smui/button';
 	import Dialog, { Title, Content, Actions } from '@smui/dialog';
 	import Select, { Option } from '@smui/select';
-	import { listIconFilenames, validateFilename } from '$lib/storage';
+	import { listIconFilenames, validateImageFile } from '$lib/storage';
 
 	type DialogMode = 'create' | 'edit';
 	type ShapeProfile = { id: string; short_name: string; icon?: string | null };
@@ -11,7 +10,8 @@
 		mode: DialogMode;
 		originalId: string | null;
 		short_name: string;
-		icon: string | null;
+		iconFile: File | null;
+		selectedIcon: string | null;
 	};
 
 	let { onDialogSubmit } = $props<{
@@ -21,8 +21,11 @@
 	let open = $state(false);
 	let mode = $state<DialogMode>('create');
 	let originalId = $state('');
+	let originalIcon = $state<string | null>(null);
+	let selectedIcon = $state('');
 	let shortName = $state('');
-	let icon = $state('');
+	let iconFile = $state<File | null>(null);
+	let iconInputKey = $state(0);
 	let iconOptions = $state<string[]>([]);
 	let loadingIcons = $state(false);
 	let iconOptionsError = $state('');
@@ -47,26 +50,27 @@
 		}
 	}
 
-	onMount(() => {
-		void ensureIconOptionsLoaded();
-	});
-
 	function reset() {
 		open = false;
 		mode = 'create';
 		originalId = '';
+		originalIcon = null;
+		selectedIcon = '';
 		shortName = '';
-		icon = '';
+		iconFile = null;
+		iconInputKey += 1;
 		saving = false;
 		formError = '';
 	}
 
 	export function openCreateDialog() {
-		void ensureIconOptionsLoaded();
 		mode = 'create';
 		originalId = '';
+		originalIcon = null;
+		selectedIcon = '';
 		shortName = '';
-		icon = '';
+		iconFile = null;
+		iconInputKey += 1;
 		formError = '';
 		open = true;
 	}
@@ -75,21 +79,28 @@
 		void ensureIconOptionsLoaded();
 		mode = 'edit';
 		originalId = shapeProfile.id;
+		originalIcon = shapeProfile.icon ?? null;
+		selectedIcon = shapeProfile.icon ?? '';
 		shortName = shapeProfile.short_name;
-		icon = shapeProfile.icon ?? '';
+		iconFile = null;
+		iconInputKey += 1;
 		formError = '';
 		open = true;
 	}
 
+	function onIconInputChange(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		iconFile = input.files?.[0] ?? null;
+	}
+
 	async function save() {
 		const trimmedShortName = shortName.trim();
-		const trimmedIcon = icon.trim();
 		if (!trimmedShortName) {
 			formError = 'Short Name is required.';
 			return;
 		}
-		if (trimmedIcon && !validateFilename(trimmedIcon)) {
-			formError = 'Icon must be a safe filename with png, jpg, jpeg, gif, or svg extension.';
+		if (iconFile && !validateImageFile(iconFile)) {
+			formError = 'Icon must be a PNG, JPG, JPEG, GIF, or SVG image.';
 			return;
 		}
 
@@ -101,8 +112,11 @@
 				mode,
 				originalId: originalId || null,
 				short_name: trimmedShortName,
-				icon: trimmedIcon || null
+				iconFile,
+				selectedIcon: selectedIcon.trim() || null
 			});
+			// Force refresh of icon list on next dialog open
+			iconsLoaded = false;
 			reset();
 		} catch (error) {
 			formError = error instanceof Error ? error.message : 'Failed to save shape profile.';
@@ -129,24 +143,42 @@
 				placeholder="e.g. Bullet"
 				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
 			/>
-			<label for="shape-profile-icon">Icon Filename</label>
-			<Select
-				bind:value={icon}
-				variant="filled"
-				noLabel
-				menu$fixed
-				menu$fullWidth={false}
-				style="width:100%;"
-			>
-				<Option value="">No icon</Option>
-				{#each iconOptions as iconOption}
-					<Option value={iconOption}>{iconOption}</Option>
-				{/each}
-			</Select>
-			{#if loadingIcons}
-				<p style="margin:0; opacity:0.8;">Loading icons…</p>
-			{:else if iconOptionsError}
-				<p style="margin:0; color:#ff8a80;">{iconOptionsError}</p>
+			<label for="shape-profile-icon-file">Upload Icon (optional)</label>
+			{#key iconInputKey}
+				<input
+					id="shape-profile-icon-file"
+					type="file"
+					accept=".png,.jpg,.jpeg,.gif,.svg,image/png,image/jpeg,image/gif,image/svg+xml"
+					onchange={onIconInputChange}
+					style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				/>
+			{/key}
+			{#if mode === 'edit' && originalIcon && !iconFile}
+				<p style="margin:0; opacity:0.8;">Current icon: {originalIcon}</p>
+			{/if}
+			{#if mode === 'edit'}
+				<p style="margin:0;">Or select an existing icon</p>
+				<Select
+					bind:value={selectedIcon}
+					variant="filled"
+					noLabel
+					menu$fixed
+					menu$fullWidth={false}
+					style="width:100%;"
+				>
+					<Option value="">No icon</Option>
+					{#each iconOptions as iconOption}
+						<Option value={iconOption}>{iconOption}</Option>
+					{/each}
+				</Select>
+				{#if loadingIcons}
+					<p style="margin:0; opacity:0.8;">Loading icons…</p>
+				{:else if iconOptionsError}
+					<p style="margin:0; color:#ff8a80;">{iconOptionsError}</p>
+				{/if}
+			{/if}
+			{#if iconFile}
+				<p style="margin:0; opacity:0.8;">Selected file: {iconFile.name}</p>
 			{/if}
 			{#if formError}
 				<p style="margin:0; color:#ff8a80;">{formError}</p>

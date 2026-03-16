@@ -50,7 +50,7 @@
 	style="position:fixed; top:12px; right:12px; z-index:1000; display:flex; align-items:center; gap:8px;"
 >
 	{#if data?.user}
-		<span style="font-size:0.85rem; opacity:0.85;">Signed in as {signedInLabel}</span>
+		<span style="font-size:1rem; opacity:1;">Signed in as {signedInLabel}</span>
 		<Button
 			variant="outlined"
 			color="primary"

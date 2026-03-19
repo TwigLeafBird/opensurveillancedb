@@ -87,14 +87,14 @@
 		>{mode === 'create' ? 'Create Color Option' : 'Edit Color Option'}</Title
 	>
 	<Content id="color-option-dialog-content">
-		<div style="display:flex; flex-direction:column; gap:8px; min-width:280px;">
+		<div class="flex min-w-[280px] flex-col gap-2">
 			{#if mode === 'create'}
 				<label for="color-option-code">Code</label>
 				<input
 					id="color-option-code"
 					bind:value={code}
 					placeholder="e.g. RED"
-					style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+					class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 				/>
 			{/if}
 			<label for="color-option-name">Name</label>
@@ -102,10 +102,10 @@
 				id="color-option-name"
 				bind:value={name}
 				placeholder="e.g. Red"
-				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 			{#if formError}
-				<p style="margin:0; color:#ff8a80;">{formError}</p>
+				<p class="m-0 text-[#ff8a80]">{formError}</p>
 			{/if}
 		</div>
 	</Content>

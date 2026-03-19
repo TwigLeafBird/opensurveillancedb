@@ -19,12 +19,13 @@
 		alt={alt ?? ''}
 		width={size}
 		height={size}
-		style="object-fit:contain; display:inline-block;"
+		class="object-contain inline-block"
 		onerror={hideImage}
 	/>
 {:else}
 	<span
-		style="display:inline-block; width:{size}px; height:{size}px; line-height:{size}px; text-align:center; font-family: monospace;"
+		class="inline-block text-center font-mono"
+		style="width:{size}px; height:{size}px; line-height:{size}px;"
 		>{filename ?? '-'}</span
 	>
 {/if}

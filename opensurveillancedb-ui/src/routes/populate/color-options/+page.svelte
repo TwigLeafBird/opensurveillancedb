@@ -91,7 +91,7 @@
 <ErrorSnackbar bind:this={errorSnackbarRef} />
 
 {#if canEdit}
-	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+	<div class="mb-2 flex justify-end">
 		<Button
 			variant="raised"
 			color="primary"
@@ -111,12 +111,12 @@
 {#if colors.length === 0}
 	<p><em>No colors found.</em></p>
 {:else}
-	<div style="overflow:auto">
-		<DataTable table$aria-label="Color options" style="width: 100%;">
+	<div class="overflow-auto">
+		<DataTable table$aria-label="Color options" class="w-full">
 			<Head>
 				<Row>
 					<Cell>Code</Cell>
-					<Cell style="width:100%;">Name</Cell>
+					<Cell class="w-full">Name</Cell>
 					{#if canEdit}
 						<Cell>Actions</Cell>
 					{/if}
@@ -130,7 +130,7 @@
 						{#if canEdit}
 							<Cell>
 								{#if editingCode === c.code}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -141,7 +141,7 @@
 									>
 								{/if}
 								{#if deletingCode === c.code}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -158,14 +158,14 @@
 				{#if creatingPending}
 					<Row>
 						<Cell>
-							<CircularProgress style="height: 32px; width: 32px;" indeterminate /></Cell
+							<CircularProgress class="h-8 w-8" indeterminate /></Cell
 						>
 						<Cell>
-							<CircularProgress style="height: 32px; width: 32px;" indeterminate /></Cell
+							<CircularProgress class="h-8 w-8" indeterminate /></Cell
 						>
 						{#if canEdit}
 							<Cell>
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								<CircularProgress class="h-8 w-8" indeterminate />
 							</Cell>
 						{/if}
 					</Row>

@@ -144,24 +144,24 @@
 	<Title id="device-model-dialog-title"
 		>{mode === 'create' ? 'Create Device Model' : 'Edit Device Model'}</Title
 	>
-	<Content id="device-model-dialog-content" style="overflow: visible;">
-		<div style="display:flex; flex-direction:column; gap:8px; min-width:360px;">
+	<Content id="device-model-dialog-content" class="overflow-visible">
+		<div class="flex min-w-[360px] flex-col gap-2">
 			<label for="device-model-name">Name</label>
 			<input
 				id="device-model-name"
 				bind:value={name}
 				placeholder="e.g. DS-2CD2120F"
-				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 
-			<p style="margin:0;">Manufacturer</p>
+			<p class="m-0">Manufacturer</p>
 			<Select
 				bind:value={manufacturerId}
 				variant="filled"
 				noLabel
 				menu$fixed
 				menu$fullWidth={false}
-				style="width:100%;"
+				class="w-full"
 			>
 				<Option value="">None</Option>
 				{#each manufacturers as manufacturer}
@@ -169,12 +169,12 @@
 				{/each}
 			</Select>
 
-			<fieldset style="border:none; margin:0; padding:0;">
-				<legend style="padding:0; margin-bottom:4px;">Shape Profile</legend>
+			<fieldset class="border-none m-0 p-0">
+				<legend class="p-0 mb-1">Shape Profile</legend>
 				<div
-					style="display:flex; flex-direction:column; gap:4px; max-height:180px; overflow:auto; border:1px solid currentColor; border-radius:4px; padding:8px;"
+					class="flex max-h-[180px] flex-col gap-1 overflow-auto rounded border border-current p-2"
 				>
-					<div style="display:flex; align-items:center; gap:8px;">
+					<div class="flex items-center gap-2">
 						<input id="shape-profile-none" type="radio" bind:group={shapeProfileId} value="" />
 						<label for="shape-profile-none">None</label>
 					</div>
@@ -182,7 +182,7 @@
 						<em>No shape profiles available.</em>
 					{:else}
 						{#each shapeProfiles as shapeProfile}
-							<div style="display:flex; align-items:center; gap:8px;">
+							<div class="flex items-center gap-2">
 								<input
 									id={`shape-profile-${shapeProfile.id}`}
 									type="radio"
@@ -208,7 +208,7 @@
 				id="device-model-datasheet"
 				bind:value={datasheetUrl}
 				placeholder="https://..."
-				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 
 			<label for="device-model-product">Product URL</label>
@@ -216,19 +216,19 @@
 				id="device-model-product"
 				bind:value={productUrl}
 				placeholder="https://..."
-				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 
 			<div>
-				<p style="margin:0 0 4px 0;">Colors</p>
+				<p class="mt-0 mr-0 mb-1 ml-0">Colors</p>
 				<div
-					style="display:flex; flex-direction:column; gap:4px; max-height:120px; overflow:auto; border:1px solid currentColor; border-radius:4px; padding:8px;"
+					class="flex max-h-[120px] flex-col gap-1 overflow-auto rounded border border-current p-2"
 				>
 					{#if colors.length === 0}
 						<em>No colors available.</em>
 					{:else}
 						{#each colors as color}
-							<label style="display:flex; align-items:center; gap:8px;">
+							<label class="flex items-center gap-2">
 								<Checkbox bind:group={selectedColorIds} value={color.code} />
 								<span>{color.name} ({color.code})</span>
 							</label>
@@ -238,15 +238,15 @@
 			</div>
 
 			<div>
-				<p style="margin:0 0 4px 0;">Possible Locations</p>
+				<p class="mt-0 mr-0 mb-1 ml-0">Possible Locations</p>
 				<div
-					style="display:flex; flex-direction:column; gap:4px; max-height:120px; overflow:auto; border:1px solid currentColor; border-radius:4px; padding:8px;"
+					class="flex max-h-[120px] flex-col gap-1 overflow-auto rounded border border-current p-2"
 				>
 					{#if locations.length === 0}
 						<em>No locations available.</em>
 					{:else}
 						{#each locations as location}
-							<label style="display:flex; align-items:center; gap:8px;">
+							<label class="flex items-center gap-2">
 								<Checkbox bind:group={selectedLocationCodes} value={location.code} />
 								<span>{location.name} ({location.code})</span>
 							</label>
@@ -256,7 +256,7 @@
 			</div>
 
 			{#if formError}
-				<p style="margin:0; color:#ff8a80;">{formError}</p>
+				<p class="m-0 text-[#ff8a80]">{formError}</p>
 			{/if}
 		</div>
 	</Content>

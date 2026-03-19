@@ -134,14 +134,14 @@
 	<Title id="shape-profile-dialog-title"
 		>{mode === 'create' ? 'Create Shape Profile' : 'Edit Shape Profile'}</Title
 	>
-	<Content id="shape-profile-dialog-content" style="overflow: visible;">
-		<div style="display:flex; flex-direction:column; gap:8px; min-width:320px;">
+	<Content id="shape-profile-dialog-content" class="overflow-visible">
+		<div class="flex min-w-80 flex-col gap-2">
 			<label for="shape-profile-short-name">Short Name</label>
 			<input
 				id="shape-profile-short-name"
 				bind:value={shortName}
 				placeholder="e.g. Bullet"
-				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 			<label for="shape-profile-icon-file">Upload Icon (optional)</label>
 			{#key iconInputKey}
@@ -150,21 +150,21 @@
 					type="file"
 					accept=".png,.jpg,.jpeg,.gif,.svg,image/png,image/jpeg,image/gif,image/svg+xml"
 					onchange={onIconInputChange}
-					style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+					class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 				/>
 			{/key}
 			{#if mode === 'edit' && originalIcon && !iconFile}
-				<p style="margin:0; opacity:0.8;">Current icon: {originalIcon}</p>
+				<p class="m-0 opacity-80">Current icon: {originalIcon}</p>
 			{/if}
 			{#if mode === 'edit'}
-				<p style="margin:0;">Or select an existing icon</p>
+				<p class="m-0">Or select an existing icon</p>
 				<Select
 					bind:value={selectedIcon}
 					variant="filled"
 					noLabel
 					menu$fixed
 					menu$fullWidth={false}
-					style="width:100%;"
+					class="w-full"
 				>
 					<Option value="">No icon</Option>
 					{#each iconOptions as iconOption}
@@ -172,16 +172,16 @@
 					{/each}
 				</Select>
 				{#if loadingIcons}
-					<p style="margin:0; opacity:0.8;">Loading icons…</p>
+					<p class="m-0 opacity-80">Loading icons…</p>
 				{:else if iconOptionsError}
-					<p style="margin:0; color:#ff8a80;">{iconOptionsError}</p>
+					<p class="m-0 text-[#ff8a80]">{iconOptionsError}</p>
 				{/if}
 			{/if}
 			{#if iconFile}
-				<p style="margin:0; opacity:0.8;">Selected file: {iconFile.name}</p>
+				<p class="m-0 opacity-80">Selected file: {iconFile.name}</p>
 			{/if}
 			{#if formError}
-				<p style="margin:0; color:#ff8a80;">{formError}</p>
+				<p class="m-0 text-[#ff8a80]">{formError}</p>
 			{/if}
 		</div>
 	</Content>

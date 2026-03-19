@@ -113,7 +113,7 @@
 <ErrorSnackbar bind:this={errorSnackbarRef} />
 
 {#if canEdit}
-	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+	<div class="mb-2 flex justify-end">
 		<Button
 			variant="raised"
 			color="primary"
@@ -133,13 +133,13 @@
 {#if manufacturers.length === 0}
 	<p><em>No manufacturers found.</em></p>
 {:else}
-	<div style="overflow:auto">
-		<DataTable table$aria-label="Manufacturers" style="width: 100%;">
+	<div class="overflow-auto">
+		<DataTable table$aria-label="Manufacturers" class="w-full">
 			<Head>
 				<Row>
 					<Cell>Name</Cell>
 					<Cell>ID</Cell>
-					<Cell style="width:100%;">Alternate Names</Cell>
+					<Cell class="w-full">Alternate Names</Cell>
 					{#if canEdit}
 						<Cell>Actions</Cell>
 					{/if}
@@ -154,7 +154,7 @@
 						{#if canEdit}
 							<Cell>
 								{#if editingId === m.id}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -165,7 +165,7 @@
 									>
 								{/if}
 								{#if deletingId === m.id}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -186,7 +186,7 @@
 						<Cell></Cell>
 						{#if canEdit}
 							<Cell>
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								<CircularProgress class="h-8 w-8" indeterminate />
 							</Cell>
 						{/if}
 					</Row>

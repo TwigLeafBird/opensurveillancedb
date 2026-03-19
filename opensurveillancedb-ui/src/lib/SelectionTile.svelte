@@ -28,14 +28,13 @@
 
 <button
 	type="button"
-	class:selected
-	class="selection-tile"
 	{disabled}
 	aria-pressed={selected}
 	{onclick}
+	class="flex flex-col items-center justify-center gap-3 min-h-40 min-w-40 p-4 border rounded-[0.875rem] text-inherit cursor-pointer transition-all duration-150 ease-in-out text-center [&:hover:not(:disabled)]:-translate-y-px [&:hover:not(:disabled)]:[border-color:color-mix(in_srgb,currentColor_35%,transparent)] [&:hover:not(:disabled)]:[background:color-mix(in_srgb,currentColor_7%,transparent)] focus-visible:[outline:2px_solid_currentColor] focus-visible:outline-offset-2 disabled:opacity-60 disabled:cursor-not-allowed {selected ? '[border-color:var(--mdc-theme-primary,#6200ee)] [background:color-mix(in_srgb,var(--mdc-theme-primary,#6200ee)_16%,transparent)] [box-shadow:0_0_0_1px_color-mix(in_srgb,var(--mdc-theme-primary,#6200ee)_60%,transparent)]' : '[border-color:color-mix(in_srgb,currentColor_20%,transparent)] [background:color-mix(in_srgb,currentColor_4%,transparent)]'}"
 >
 	{#if imageSrc || iconFilename}
-		<div class="selection-tile__media" aria-hidden="true">
+		<div class="flex items-center justify-center w-16 h-16" aria-hidden="true">
 			{#if imageSrc}
 				<img src={imageSrc} alt={imageAlt ?? label} width={mediaSize} height={mediaSize} />
 			{:else}
@@ -44,89 +43,11 @@
 		</div>
 	{/if}
 
-	<div class="selection-tile__text">
-		<span class="selection-tile__label">{label}</span>
+	<div class="flex flex-col gap-1 items-center">
+		<span class="text-base font-semibold leading-[1.35]">{label}</span>
 		{#if supportingText}
-			<span class="selection-tile__supporting">{supportingText}</span>
+			<span class="text-sm opacity-75 leading-[1.3]">{supportingText}</span>
 		{/if}
 	</div>
 </button>
 
-<style>
-	.selection-tile {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 0.75rem;
-		min-height: 10rem;
-		min-width: 10rem;
-		padding: 1rem;
-		border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-		border-radius: 0.875rem;
-		background: color-mix(in srgb, currentColor 4%, transparent);
-		color: inherit;
-		cursor: pointer;
-		transition:
-			border-color 0.15s ease,
-			background-color 0.15s ease,
-			transform 0.15s ease,
-			box-shadow 0.15s ease;
-		text-align: center;
-	}
-
-	.selection-tile:hover:not(:disabled) {
-		transform: translateY(-1px);
-		border-color: color-mix(in srgb, currentColor 35%, transparent);
-		background: color-mix(in srgb, currentColor 7%, transparent);
-	}
-
-	.selection-tile:focus-visible {
-		outline: 2px solid currentColor;
-		outline-offset: 2px;
-	}
-
-	.selection-tile.selected {
-		border-color: var(--mdc-theme-primary, #6200ee);
-		background: color-mix(in srgb, var(--mdc-theme-primary, #6200ee) 16%, transparent);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--mdc-theme-primary, #6200ee) 60%, transparent);
-	}
-
-	.selection-tile:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.selection-tile__media {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 4rem;
-		height: 4rem;
-	}
-
-	.selection-tile__media :global(img) {
-		max-width: 100%;
-		max-height: 100%;
-		object-fit: contain;
-	}
-
-	.selection-tile__text {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		align-items: center;
-	}
-
-	.selection-tile__label {
-		font-size: 1rem;
-		font-weight: 600;
-		line-height: 1.35;
-	}
-
-	.selection-tile__supporting {
-		font-size: 0.875rem;
-		opacity: 0.75;
-		line-height: 1.3;
-	}
-</style>

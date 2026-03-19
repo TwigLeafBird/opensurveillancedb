@@ -155,7 +155,7 @@
 <ErrorSnackbar bind:this={errorSnackbarRef} />
 
 {#if canEdit}
-	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+	<div class="mb-2 flex justify-end">
 		<Button
 			variant="raised"
 			color="primary"
@@ -175,13 +175,13 @@
 {#if shapeProfiles.length === 0}
 	<p><em>No shape profiles found.</em></p>
 {:else}
-	<div style="overflow:auto">
-		<DataTable table$aria-label="Shape profiles" style="width: 100%;">
+	<div class="overflow-auto">
+		<DataTable table$aria-label="Shape profiles" class="w-full">
 			<Head>
 				<Row>
 					<Cell>Short Name</Cell>
 					<Cell>ID</Cell>
-					<Cell style="width:100%;">Icon</Cell>
+					<Cell class="w-full">Icon</Cell>
 					{#if canEdit}
 						<Cell>Actions</Cell>
 					{/if}
@@ -199,7 +199,7 @@
 						{#if canEdit}
 							<Cell>
 								{#if editingId === s.id}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -210,7 +210,7 @@
 									>
 								{/if}
 								{#if deletingId === s.id}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -231,7 +231,7 @@
 						<Cell></Cell>
 						{#if canEdit}
 							<Cell>
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								<CircularProgress class="h-8 w-8" indeterminate />
 							</Cell>
 						{/if}
 					</Row>

@@ -95,23 +95,23 @@
 		>{mode === 'create' ? 'Create Manufacturer' : 'Edit Manufacturer'}</Title
 	>
 	<Content id="manufacturer-dialog-content">
-		<div style="display:flex; flex-direction:column; gap:8px; min-width:320px;">
+		<div class="flex min-w-80 flex-col gap-2">
 			<label for="manufacturer-name">Name</label>
 			<input
 				id="manufacturer-name"
 				bind:value={name}
 				placeholder="e.g. Hikvision"
-				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 			<label for="manufacturer-alt-names">Alternate Names (comma separated)</label>
 			<input
 				id="manufacturer-alt-names"
 				bind:value={alternateNamesText}
 				placeholder="e.g. Hangzhou Hikvision, Hik Vision"
-				style="color:inherit; background:transparent; border:1px solid currentColor; border-radius:4px; padding:8px; caret-color:currentColor;"
+				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 			{#if formError}
-				<p style="margin:0; color:#ff8a80;">{formError}</p>
+				<p class="m-0 text-[#ff8a80]">{formError}</p>
 			{/if}
 		</div>
 	</Content>

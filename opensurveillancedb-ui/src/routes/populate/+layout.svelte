@@ -42,8 +42,8 @@
 	{/snippet}
 </TabBar>
 
-<main style="padding:1rem; box-sizing: border-box;">
-	<div style="max-width:100%;">
+<main class="p-4 box-border">
+	<div class="max-w-full">
 		{@render children()}
 	</div>
 </main>

@@ -73,23 +73,21 @@
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
-<div style="display:flex; height:100vh; flex-direction:column;">
+<div class="flex h-screen flex-col">
 	<TopAppBar variant="static">
 		<Row>
 			<Section>
 				<Title>opensurveillancedb</Title>
 			</Section>
-			<Section align="end" style="gap:8px; padding-right:16px;">
+			<Section align="end" class="gap-2 pr-4">
 				{#if data?.user}
-					<span style="font-size:0.95rem; opacity:1; white-space:nowrap;"
-						>Signed in as {signedInLabel}</span
-					>
+					<span class="text-[0.95rem] whitespace-nowrap">Signed in as {signedInLabel}</span>
 					<Button
 						variant="outlined"
 						color="primary"
 						onclick={signOut}
 						disabled={signingOut}
-						style="color:#fff; border-color:#fff;"
+						class="text-white border-white"
 					>
 						<Label>{signingOut ? 'Logging out…' : 'Logout'}</Label>
 					</Button>
@@ -99,7 +97,7 @@
 						color="primary"
 						onclick={signInWithGitHub}
 						disabled={signingIn}
-						style="color:#fff; border-color:#fff;"
+						class="text-white border-white"
 					>
 						<Label>{signingIn ? 'Redirecting…' : 'Sign in with GitHub'}</Label>
 					</Button>
@@ -108,8 +106,8 @@
 		</Row>
 	</TopAppBar>
 
-	<div style="display:flex; min-height:0; flex:1; align-items:stretch;">
-		<Drawer style="height:100%; align-self:stretch;">
+	<div class="flex min-h-0 flex-1 items-stretch">
+		<Drawer class="h-full self-stretch">
 			<Content>
 				<List>
 					{#each sections as section}
@@ -121,13 +119,13 @@
 			</Content>
 		</Drawer>
 
-		<div style="min-width:0; flex:1;">
+		<div class="min-w-0 flex-1">
 			{@render children()}
 		</div>
 	</div>
 </div>
 
-<div style="display:none">
+<div class="hidden">
 	{#each locales as locale}
 		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
 	{/each}

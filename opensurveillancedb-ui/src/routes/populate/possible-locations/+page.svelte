@@ -95,7 +95,7 @@
 <ErrorSnackbar bind:this={errorSnackbarRef} />
 
 {#if canEdit}
-	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+	<div class="mb-2 flex justify-end">
 		<Button
 			variant="raised"
 			color="primary"
@@ -115,12 +115,12 @@
 {#if locations.length === 0}
 	<p><em>No possible locations found.</em></p>
 {:else}
-	<div style="overflow:auto">
-		<DataTable table$aria-label="Possible locations" style="width: 100%;">
+	<div class="overflow-auto">
+		<DataTable table$aria-label="Possible locations" class="w-full">
 			<Head>
 				<Row>
 					<Cell>Location Code</Cell>
-					<Cell style="width:100%;">Location Name</Cell>
+					<Cell class="w-full">Location Name</Cell>
 					{#if canEdit}
 						<Cell>Actions</Cell>
 					{/if}
@@ -136,7 +136,7 @@
 						{#if canEdit}
 							<Cell>
 								{#if editingCode === p.code}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -147,7 +147,7 @@
 									>
 								{/if}
 								{#if deletingCode === p.code}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -167,7 +167,7 @@
 						<Cell></Cell>
 						{#if canEdit}
 							<Cell>
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								<CircularProgress class="h-8 w-8" indeterminate />
 							</Cell>
 						{/if}
 					</Row>

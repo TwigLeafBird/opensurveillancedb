@@ -50,18 +50,16 @@
 	}
 </script>
 
-<div
-	style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;"
->
-	<div style="width:100%; max-width:420px; display:flex; flex-direction:column; gap:12px;">
-		<h1 style="margin:0;">Sign in</h1>
-		<p style="margin:0; opacity:0.85;">Use GitHub to continue.</p>
+<div class="min-h-screen flex items-center justify-center p-6">
+	<div class="w-full max-w-[420px] flex flex-col gap-3">
+		<h1 class="m-0">Sign in</h1>
+		<p class="m-0 opacity-85">Use GitHub to continue.</p>
 		<Button variant="raised" color="primary" onclick={signInWithGitHub} disabled={signingIn}>
 			<Icon class="material-icons">login</Icon>
 			<Label>{signingIn ? 'Redirecting…' : 'Sign in with GitHub'}</Label>
 		</Button>
 		{#if authError}
-			<p style="margin:0; color:#ff8a80;">{authError}</p>
+			<p class="m-0 text-[#ff8a80]">{authError}</p>
 		{/if}
 	</div>
 </div>

@@ -145,7 +145,7 @@
 <ErrorSnackbar bind:this={errorSnackbarRef} />
 
 {#if canEdit}
-	<div style="margin-bottom:8px; display:flex; justify-content:flex-end;">
+	<div class="mb-2 flex justify-end">
 		<Button
 			variant="raised"
 			color="primary"
@@ -172,34 +172,34 @@
 {#if deviceInfos.length === 0}
 	<p><em>No device models found.</em></p>
 {:else}
-	<div style="overflow:auto">
-		<DataTable table$aria-label="Device models" style="width: 100%; table-layout: fixed;">
+	<div class="overflow-auto">
+		<DataTable table$aria-label="Device models" class="w-full [table-layout:fixed]">
 			<Head>
 				<Row>
-					<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+					<Cell class="w-[20%] whitespace-nowrap overflow-hidden text-ellipsis"
 						>Name</Cell
 					>
-					<Cell style="width:8%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+					<Cell class="w-[8%] whitespace-nowrap overflow-hidden text-ellipsis"
 						>ID</Cell
 					>
-					<Cell style="width:15%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+					<Cell class="w-[15%] whitespace-nowrap overflow-hidden text-ellipsis"
 						>Manufacturer</Cell
 					>
-					<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+					<Cell class="w-[20%] whitespace-nowrap overflow-hidden text-ellipsis"
 						>Shape Profile</Cell
 					>
-					<Cell style="width:12%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+					<Cell class="w-[12%] whitespace-nowrap overflow-hidden text-ellipsis"
 						>Colors</Cell
 					>
-					<Cell style="width:15%; white-space:normal;">Possible Locations</Cell>
-					<Cell style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+					<Cell class="w-[15%] whitespace-normal">Possible Locations</Cell>
+					<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis"
 						>Datasheet</Cell
 					>
-					<Cell style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+					<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis"
 						>Product</Cell
 					>
 					{#if canEdit}
-						<Cell style="width:7%;">Actions</Cell>
+						<Cell class="w-[7%]">Actions</Cell>
 					{/if}
 				</Row>
 			</Head>
@@ -207,35 +207,31 @@
 			<Body>
 				{#each deviceInfos as m (m.id)}
 					<Row>
-						<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-							>{m.name}</Cell
-						>
-						<Cell style="width:8%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-							><code>{m.id}</code></Cell
-						>
-						<Cell style="width:15%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-							>{m.manufacturer?.name ?? '-'}</Cell
-						>
+						<Cell class="w-[20%] whitespace-nowrap overflow-hidden text-ellipsis">{m.name}</Cell>
+						<Cell class="w-[8%] whitespace-nowrap overflow-hidden text-ellipsis"
+							><code>{m.id}</code></Cell>
+						<Cell class="w-[15%] whitespace-nowrap overflow-hidden text-ellipsis"
+							>{m.manufacturer?.name ?? '-'}</Cell>
 						<Cell>
-							<div style="display:flex; align-items:center; gap:8px; min-width:0;">
+							<div class="flex items-center gap-2 min-w-0">
 								<ShapeIcon
 									filename={m.device_shape_profile?.icon ?? null}
 									alt={m.device_shape_profile?.short_name ?? ''}
 									size={40}
 								/>
-								<span style="flex:1; min-width:0; white-space:normal; word-break:break-word;"
+								<span class="flex-1 min-w-0 whitespace-normal break-words"
 									>{m.device_shape_profile?.short_name ?? m.shape_profile ?? '-'}</span
 								>
 							</div>
 						</Cell>
-						<Cell style="width:12%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+						<Cell class="w-[12%] whitespace-nowrap overflow-hidden text-ellipsis">
 							{#if m.device_color_option && m.device_color_option.length > 0}
 								{m.device_color_option.map((co) => co?.color?.name ?? co?.color?.code).join(', ')}
 							{:else}
 								-
 							{/if}
 						</Cell>
-						<Cell style="width:15%; white-space:normal;">
+						<Cell class="w-[15%] whitespace-normal">
 							{#if m.device_possible_location && m.device_possible_location.length > 0}
 								{m.device_possible_location
 									.map((pl) => pl?.device_location?.name ?? pl?.location_code)
@@ -244,7 +240,7 @@
 								-
 							{/if}
 						</Cell>
-						<Cell style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+						<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis">
 							{#if sanitizeHref(m.datasheet_url)}
 								<a href={sanitizeHref(m.datasheet_url)} target="_blank" rel="noopener noreferrer"
 									>link</a
@@ -253,7 +249,7 @@
 								-
 							{/if}
 						</Cell>
-						<Cell style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+						<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis">
 							{#if sanitizeHref(m.product_url)}
 								<a href={sanitizeHref(m.product_url)} target="_blank" rel="noopener noreferrer"
 									>link</a
@@ -265,7 +261,7 @@
 						{#if canEdit}
 							<Cell>
 								{#if editingId === m.id}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -276,7 +272,7 @@
 									>
 								{/if}
 								{#if deletingId === m.id}
-									<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+									<CircularProgress class="h-8 w-8" indeterminate />
 								{:else}
 									<IconButton
 										class="material-icons"
@@ -302,7 +298,7 @@
 						<Cell></Cell>
 						{#if canEdit}
 							<Cell>
-								<CircularProgress style="height: 32px; width: 32px;" indeterminate />
+								<CircularProgress class="h-8 w-8" indeterminate />
 							</Cell>
 						{/if}
 					</Row>

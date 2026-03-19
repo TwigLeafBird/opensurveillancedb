@@ -69,27 +69,16 @@
 	);
 </script>
 
-<div style="padding:1.5rem; display:flex; flex-direction:column; gap:1.5rem;">
-	<section style="display:flex; flex-direction:column; gap:0.5rem;">
-		<h1 style="margin:0; font-size:1.8rem;">Identify</h1>
-		<p style="margin:0; opacity:0.8;">
-			Answer the high-level questions below to narrow down the most likely device models.
-		</p>
-	</section>
-
-	<section style="display:flex; flex-direction:column; gap:1.5rem;">
-		<div style="display:flex; flex-direction:column; align-items:flex-start; gap:0.75rem;">
-			<h2 style="margin:0; font-size:1.25rem;">Main Questions</h2>
-			<Button variant="outlined" onclick={clearSelections}>
-				<Label>Clear selections</Label>
-			</Button>
-		</div>
-
-		<div style="display:flex; flex-direction:column; gap:0.75rem;">
-			<h3 style="margin:0; font-size:1rem;">Manufacturer</h3>
-			<div
-				style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
-			>
+<div class="flex flex-col gap-6 p-6">
+	<section class="flex flex-col gap-6">
+		<div class="flex flex-col gap-3">
+			<div class="w-fit">
+				<Button variant="outlined" onclick={clearSelections}>
+					<Label>Clear selections</Label>
+				</Button>
+			</div>
+			<h3 class="m-0 text-base">Manufacturer</h3>
+			<div class="grid [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))] gap-4">
 				{#each manufacturers as manufacturer (manufacturer.id)}
 					<SelectionTile
 						label={manufacturer.name}

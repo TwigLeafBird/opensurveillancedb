@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '$lib/hex-swatch-border.css';
 	import { getColorSwatchPublicUrl } from '$lib/storage';
 
 	type ColorOptionEntry = {
@@ -56,7 +57,7 @@
 			{#if visual.hexColor}
 				<div
 					class="hex-swatch-border"
-					style="width:20px; height:20px; border-radius:4px; border-width:1px; border-style:solid; background-color:{visual.hexColor};"
+					style="width:20px; height:20px; border-radius:4px; background-color:{visual.hexColor};"
 					title={visual.name}
 				></div>
 			{:else}
@@ -74,15 +75,3 @@
 {:else}
 	-
 {/if}
-
-<style>
-	.hex-swatch-border {
-		border-color: color-mix(in srgb, currentColor 55%, transparent);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.hex-swatch-border {
-			border-color: color-mix(in srgb, white 80%, transparent);
-		}
-	}
-</style>

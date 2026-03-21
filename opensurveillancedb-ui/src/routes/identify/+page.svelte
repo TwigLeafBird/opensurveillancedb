@@ -181,7 +181,7 @@
 					<Label>Clear selections</Label>
 				</Button>
 			</div>
-			<h3 class="m-0 text-base">Manufacturer</h3>
+			<p class="m-0 text-base leading-5 font-semibold">Manufacturer</p>
 			<div class="grid [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))] gap-4">
 				{#each manufacturers as manufacturer (manufacturer.id)}
 					{@const primaryLogoUrl = getManufacturerIconPublicUrl(manufacturer.icons?.[0] ?? null)}
@@ -198,7 +198,7 @@
 		</div>
 
 		<div style="display:flex; flex-direction:column; gap:0.75rem;">
-			<h3 style="margin:0; font-size:1rem;">Shape Profile</h3>
+			<p class="m-0 text-base leading-5 font-semibold">Shape Profile</p>
 			<div
 				style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
 			>
@@ -214,7 +214,7 @@
 		</div>
 
 		<div style="display:flex; flex-direction:column; gap:0.75rem;">
-			<h3 style="margin:0; font-size:1rem;">Color</h3>
+			<p class="m-0 text-base leading-5 font-semibold">Color</p>
 			<div
 				style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
 			>
@@ -235,7 +235,7 @@
 	</section>
 
 	<section style="display:flex; flex-direction:column; gap:0.75rem;">
-		<h2 style="margin:0; font-size:1.25rem;">Follow-up Questions</h2>
+		<p class="m-0 text-base leading-5 font-semibold">Follow-up Questions</p>
 		<div
 			style="min-height:96px; border:1px dashed color-mix(in srgb, currentColor 20%, transparent); border-radius:0.875rem; background:color-mix(in srgb, currentColor 3%, transparent); display:flex; align-items:center; justify-content:center; padding:1rem;"
 		>
@@ -248,7 +248,9 @@
 			style="display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; flex-wrap:wrap;"
 		>
 			<div style="display:flex; flex-direction:column; gap:0.25rem;">
-				<h2 style="margin:0; font-size:1.25rem;">Possible Results</h2>
+				<p style="margin:0; font-size:2rem; line-height:1.5rem; font-weight:600;">
+					Possible Results
+				</p>
 				<p style="margin:0; opacity:0.8;">{filteredDeviceInfos.length} matching device models</p>
 			</div>
 		</div>

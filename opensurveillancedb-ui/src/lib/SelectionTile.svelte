@@ -1,5 +1,6 @@
 <script lang="ts">
-	import ShapeIcon from '$lib/ShapeIcon.svelte';
+	import '$lib/hex-swatch-border.css';
+	import ShapeIcon from './ShapeIcon.svelte';
 	import { validateFilename } from '$lib/storage';
 
 	type Props = {
@@ -82,15 +83,3 @@
 		{/if}
 	</div>
 </button>
-
-<style>
-	.hex-swatch-border {
-		border-color: color-mix(in srgb, currentColor 55%, transparent);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.hex-swatch-border {
-			border-color: color-mix(in srgb, white 80%, transparent);
-		}
-	}
-</style>

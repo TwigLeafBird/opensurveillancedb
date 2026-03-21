@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '$lib/hex-swatch-border.css';
 	import Button from '@smui/button';
 	import Dialog, { Title, Content, Actions } from '@smui/dialog';
 	import Select, { Option } from '@smui/select';
@@ -261,15 +262,3 @@
 		</Button>
 	</Actions>
 </Dialog>
-
-<style>
-	.hex-swatch-border {
-		border-color: color-mix(in srgb, currentColor 55%, transparent);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.hex-swatch-border {
-			border-color: color-mix(in srgb, white 80%, transparent);
-		}
-	}
-</style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '$lib/hex-swatch-border.css';
 	import { invalidateAll } from '$app/navigation';
 	import DataTable, { Head, Body, Row, Cell } from '@smui/data-table';
 	import Button, { Icon, Label } from '@smui/button';
@@ -287,15 +288,3 @@
 		</DataTable>
 	</div>
 {/if}
-
-<style>
-	.hex-swatch-border {
-		border-color: color-mix(in srgb, currentColor 55%, transparent);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.hex-swatch-border {
-			border-color: color-mix(in srgb, white 80%, transparent);
-		}
-	}
-</style>

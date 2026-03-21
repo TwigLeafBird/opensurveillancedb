@@ -1,0 +1,9 @@
+.hex-swatch-border {
+    border: 2px solid #666;
+}
+
+@media (prefers-color-scheme: dark) {
+    .hex-swatch-border {
+        border-color: #e8e8e8;
+    }
+}

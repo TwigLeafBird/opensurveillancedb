@@ -17,15 +17,21 @@ export type Database = {
       color: {
         Row: {
           code: string
+          hex_code: string | null
           name: string
+          swatch_icon: string | null
         }
         Insert: {
           code: string
+          hex_code?: string | null
           name: string
+          swatch_icon?: string | null
         }
         Update: {
           code?: string
+          hex_code?: string | null
           name?: string
+          swatch_icon?: string | null
         }
         Relationships: []
       }

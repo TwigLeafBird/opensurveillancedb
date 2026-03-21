@@ -5,6 +5,7 @@
 	import IconButton from '@smui/icon-button';
 	import CircularProgress from '@smui/circular-progress';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
+	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
 	import { sanitizeHref } from '$lib/url';
 	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
 	import { getErrorMessage } from '$lib/errors';
@@ -20,7 +21,14 @@
 	const shapeProfiles = $derived(
 		(data?.shapeProfiles ?? []) as Array<{ id: string; short_name: string; icon?: string | null }>
 	);
-	const colors = $derived((data?.colors ?? []) as Array<{ code: string; name: string }>);
+	const colors = $derived(
+		(data?.colors ?? []) as Array<{
+			code: string;
+			name: string;
+			hex_code?: string | null;
+			swatch_icon?: string | null;
+		}>
+	);
 	const locations = $derived((data?.locations ?? []) as Array<{ code: string; name: string }>);
 	const canEdit = $derived(!!data?.user);
 
@@ -176,28 +184,14 @@
 		<DataTable table$aria-label="Device models" class="w-full [table-layout:fixed]">
 			<Head>
 				<Row>
-					<Cell class="w-[20%] whitespace-nowrap overflow-hidden text-ellipsis"
-						>Name</Cell
-					>
-					<Cell class="w-[8%] whitespace-nowrap overflow-hidden text-ellipsis"
-						>ID</Cell
-					>
-					<Cell class="w-[15%] whitespace-nowrap overflow-hidden text-ellipsis"
-						>Manufacturer</Cell
-					>
-					<Cell class="w-[20%] whitespace-nowrap overflow-hidden text-ellipsis"
-						>Shape Profile</Cell
-					>
-					<Cell class="w-[12%] whitespace-nowrap overflow-hidden text-ellipsis"
-						>Colors</Cell
-					>
+					<Cell class="w-[20%] overflow-hidden text-ellipsis whitespace-nowrap">Name</Cell>
+					<Cell class="w-[8%] overflow-hidden text-ellipsis whitespace-nowrap">ID</Cell>
+					<Cell class="w-[15%] overflow-hidden text-ellipsis whitespace-nowrap">Manufacturer</Cell>
+					<Cell class="w-[20%] overflow-hidden text-ellipsis whitespace-nowrap">Shape Profile</Cell>
+					<Cell class="w-[12%] overflow-hidden text-ellipsis whitespace-nowrap">Colors</Cell>
 					<Cell class="w-[15%] whitespace-normal">Possible Locations</Cell>
-					<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis"
-						>Datasheet</Cell
-					>
-					<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis"
-						>Product</Cell
-					>
+					<Cell class="w-[5%] overflow-hidden text-ellipsis whitespace-nowrap">Datasheet</Cell>
+					<Cell class="w-[5%] overflow-hidden text-ellipsis whitespace-nowrap">Product</Cell>
 					{#if canEdit}
 						<Cell class="w-[7%]">Actions</Cell>
 					{/if}
@@ -207,29 +201,27 @@
 			<Body>
 				{#each deviceInfos as m (m.id)}
 					<Row>
-						<Cell class="w-[20%] whitespace-nowrap overflow-hidden text-ellipsis">{m.name}</Cell>
-						<Cell class="w-[8%] whitespace-nowrap overflow-hidden text-ellipsis"
-							><code>{m.id}</code></Cell>
-						<Cell class="w-[15%] whitespace-nowrap overflow-hidden text-ellipsis"
-							>{m.manufacturer?.name ?? '-'}</Cell>
+						<Cell class="w-[20%] overflow-hidden text-ellipsis whitespace-nowrap">{m.name}</Cell>
+						<Cell class="w-[8%] overflow-hidden text-ellipsis whitespace-nowrap"
+							><code>{m.id}</code></Cell
+						>
+						<Cell class="w-[15%] overflow-hidden text-ellipsis whitespace-nowrap"
+							>{m.manufacturer?.name ?? '-'}</Cell
+						>
 						<Cell>
-							<div class="flex items-center gap-2 min-w-0">
+							<div class="flex min-w-0 items-center gap-2">
 								<ShapeIcon
 									filename={m.device_shape_profile?.icon ?? null}
 									alt={m.device_shape_profile?.short_name ?? ''}
 									size={40}
 								/>
-								<span class="flex-1 min-w-0 whitespace-normal break-words"
+								<span class="min-w-0 flex-1 break-words whitespace-normal"
 									>{m.device_shape_profile?.short_name ?? m.shape_profile ?? '-'}</span
 								>
 							</div>
 						</Cell>
-						<Cell class="w-[12%] whitespace-nowrap overflow-hidden text-ellipsis">
-							{#if m.device_color_option && m.device_color_option.length > 0}
-								{m.device_color_option.map((co) => co?.color?.name ?? co?.color?.code).join(', ')}
-							{:else}
-								-
-							{/if}
+						<Cell class="w-[12%] overflow-hidden text-ellipsis whitespace-nowrap">
+							<ColorSwatchList colorOptions={m.device_color_option ?? []} />
 						</Cell>
 						<Cell class="w-[15%] whitespace-normal">
 							{#if m.device_possible_location && m.device_possible_location.length > 0}
@@ -240,7 +232,7 @@
 								-
 							{/if}
 						</Cell>
-						<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis">
+						<Cell class="w-[5%] overflow-hidden text-ellipsis whitespace-nowrap">
 							{#if sanitizeHref(m.datasheet_url)}
 								<a href={sanitizeHref(m.datasheet_url)} target="_blank" rel="noopener noreferrer"
 									>link</a
@@ -249,7 +241,7 @@
 								-
 							{/if}
 						</Cell>
-						<Cell class="w-[5%] whitespace-nowrap overflow-hidden text-ellipsis">
+						<Cell class="w-[5%] overflow-hidden text-ellipsis whitespace-nowrap">
 							{#if sanitizeHref(m.product_url)}
 								<a href={sanitizeHref(m.product_url)} target="_blank" rel="noopener noreferrer"
 									>link</a

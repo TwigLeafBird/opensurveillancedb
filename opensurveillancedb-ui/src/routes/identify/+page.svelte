@@ -3,6 +3,8 @@
 	import DataTable, { Body, Cell, Head, Row } from '@smui/data-table';
 	import SelectionTile from '$lib/SelectionTile.svelte';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
+	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
+	import { getColorSwatchPublicUrl } from '$lib/storage';
 	import { sanitizeHref } from '$lib/url';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import type { PageData } from './$types';
@@ -16,7 +18,14 @@
 	const shapeProfiles = $derived(
 		(data?.shapeProfiles ?? []) as Array<{ id: string; short_name: string; icon?: string | null }>
 	);
-	const colors = $derived((data?.colors ?? []) as Array<{ code: string; name: string }>);
+	const colors = $derived(
+		(data?.colors ?? []) as Array<{
+			code: string;
+			name: string;
+			hex_code?: string | null;
+			swatch_icon?: string | null;
+		}>
+	);
 
 	let selectedManufacturerIds = $state<string[]>([]);
 	let selectedShapeProfileIds = $state<string[]>([]);
@@ -36,6 +45,22 @@
 
 	function toggleColor(code: string) {
 		selectedColorCodes = toggleValue(selectedColorCodes, code);
+	}
+
+	function normalizeHexColor(value?: string | null): string | null {
+		if (!value) {
+			return null;
+		}
+
+		const trimmedValue = value.trim();
+		if (!trimmedValue) {
+			return null;
+		}
+
+		const candidate = trimmedValue.startsWith('#') ? trimmedValue : `#${trimmedValue}`;
+		return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(candidate)
+			? candidate
+			: null;
 	}
 
 	function clearSelections() {
@@ -111,9 +136,13 @@
 				style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
 			>
 				{#each colors as color (color.code)}
+					{@const hexColor = normalizeHexColor(color.hex_code)}
+					{@const swatchIconUrl = getColorSwatchPublicUrl(color.swatch_icon)}
 					<SelectionTile
 						label={color.name}
-						supportingText={color.code}
+						colorHex={hexColor}
+						imageSrc={hexColor ? null : swatchIconUrl}
+						imageAlt={color.name}
 						selected={selectedColorCodes.includes(color.code)}
 						onclick={() => toggleColor(color.code)}
 					/>
@@ -209,13 +238,7 @@
 								<Cell
 									style="width:12%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
 								>
-									{#if deviceInfo.device_color_option && deviceInfo.device_color_option.length > 0}
-										{deviceInfo.device_color_option
-											.map((option) => option?.color?.name ?? option?.color?.code)
-											.join(', ')}
-									{:else}
-										-
-									{/if}
+									<ColorSwatchList colorOptions={deviceInfo.device_color_option ?? []} />
 								</Cell>
 								<Cell style="width:15%; white-space:normal;">
 									{#if deviceInfo.device_possible_location && deviceInfo.device_possible_location.length > 0}

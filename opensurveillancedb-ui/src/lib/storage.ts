@@ -3,6 +3,8 @@ import { supabase } from '$lib/supabase/client';
 // Bucket and folder constants for icons
 export const ICON_BUCKET = 'shape_profiles';
 export const ICON_FOLDER = '';
+export const COLOR_SWATCH_BUCKET = 'color_swatches';
+export const COLOR_SWATCH_FOLDER = '';
 
 // S3-compliant filename validation: alphanumerics, dot, underscore, hyphen with image extension
 const S3_FILENAME_RE = /^[a-zA-Z0-9._-]+\.(png|jpe?g|gif|svg)$/i;
@@ -10,8 +12,8 @@ const S3_FILENAME_RE = /^[a-zA-Z0-9._-]+\.(png|jpe?g|gif|svg)$/i;
 const DIACRITICS_RE = /[\u0300-\u036f]/g;
 const NON_ALPHANUMERIC_RE = /[^a-z0-9]+/g;
 
-function sanitizeShapeProfileName(shapeProfileName: string): string {
-    const sanitized = shapeProfileName
+function sanitizeStorageName(value: string): string {
+    const sanitized = value
         .trim()
         .normalize('NFKD')
         .replace(DIACRITICS_RE, '')
@@ -20,11 +22,11 @@ function sanitizeShapeProfileName(shapeProfileName: string): string {
         .replace(/^_+|_+$/g, '')
         .replace(/_+/g, '_');
 
-    return sanitized || 'shape_profile';
+    return sanitized || 'asset';
 }
 
 function buildUniqueIconFilename(
-    shapeProfileName: string,
+    baseName: string,
     extension: string,
     existingFilenames: Iterable<string>
 ): string {
@@ -32,7 +34,7 @@ function buildUniqueIconFilename(
     const normalizedExtension = extension.toLowerCase();
     const suffixlessMaxBaseLength = maxFilenameLength - normalizedExtension.length - 1;
     const existing = new Set(existingFilenames);
-    const sanitizedBase = sanitizeShapeProfileName(shapeProfileName);
+    const sanitizedBase = sanitizeStorageName(baseName);
 
     let attempt = 0;
     while (true) {
@@ -49,9 +51,9 @@ function buildUniqueIconFilename(
     }
 }
 
-function buildStoragePath(filename: string): string {
-    const folder = (ICON_FOLDER ?? '').trim();
-    const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+function buildStoragePath(filename: string, folder: string): string {
+    const trimmedFolder = (folder ?? '').trim();
+    const cleanFolder = trimmedFolder.replace(/^\/+|\/+$/g, '');
     return cleanFolder ? `${cleanFolder}/${filename}` : filename;
 }
 
@@ -66,7 +68,7 @@ export function validateFilename(filename?: string | null): string | null {
 export function getIconPublicUrl(filename?: string | null): string | null {
     const valid = validateFilename(filename);
     if (!valid) return null;
-    const path = buildStoragePath(valid);
+    const path = buildStoragePath(valid, ICON_FOLDER);
     try {
         const { data } = supabase.storage.from(ICON_BUCKET).getPublicUrl(path);
         // data may be { publicUrl }
@@ -103,7 +105,7 @@ export async function uploadIconFile(file: File, shapeProfileName: string): Prom
         throw new Error('Failed to generate a valid icon filename.');
     }
 
-    const path = buildStoragePath(validName);
+    const path = buildStoragePath(validName, ICON_FOLDER);
     const { error } = await supabase.storage.from(ICON_BUCKET).upload(path, file, {
         cacheControl: '3600',
         upsert: false,
@@ -123,7 +125,7 @@ export async function deleteIconFile(filename?: string | null): Promise<void> {
         return;
     }
 
-    const path = buildStoragePath(validName);
+    const path = buildStoragePath(validName, ICON_FOLDER);
     const { error } = await supabase.storage.from(ICON_BUCKET).remove([path]);
 
     if (error) {
@@ -153,6 +155,93 @@ export async function listIconFilenames(): Promise<string[]> {
             .filter((name): name is string => !!name);
     } catch (e) {
         console.error('Error listing icon filenames', e);
+        return [];
+    }
+}
+
+export function getColorSwatchPublicUrl(filename?: string | null): string | null {
+    const valid = validateFilename(filename);
+    if (!valid) return null;
+    const path = buildStoragePath(valid, COLOR_SWATCH_FOLDER);
+    try {
+        const { data } = supabase.storage.from(COLOR_SWATCH_BUCKET).getPublicUrl(path);
+        if (data && (data as any).publicUrl) return (data as any).publicUrl as string;
+    } catch (e) {
+        console.error('Error getting public url for', path, e);
+    }
+    return null;
+}
+
+export async function uploadColorSwatchFile(file: File, colorName: string): Promise<string> {
+    if (!validateImageFile(file)) {
+        throw new Error('Please choose a PNG, JPG, JPEG, GIF, or SVG image.');
+    }
+
+    if (!colorName.trim()) {
+        throw new Error('Color name is required to name the swatch file.');
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ext) {
+        throw new Error('Invalid image filename.');
+    }
+
+    const existingFilenames = await listColorSwatchFilenames();
+    const generatedName = buildUniqueIconFilename(colorName, ext, existingFilenames);
+    const validName = validateFilename(generatedName);
+    if (!validName) {
+        throw new Error('Failed to generate a valid swatch filename.');
+    }
+
+    const path = buildStoragePath(validName, COLOR_SWATCH_FOLDER);
+    const { error } = await supabase.storage.from(COLOR_SWATCH_BUCKET).upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined
+    });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return validName;
+}
+
+export async function deleteColorSwatchFile(filename?: string | null): Promise<void> {
+    const validName = validateFilename(filename);
+    if (!validName) {
+        return;
+    }
+
+    const path = buildStoragePath(validName, COLOR_SWATCH_FOLDER);
+    const { error } = await supabase.storage.from(COLOR_SWATCH_BUCKET).remove([path]);
+
+    if (error) {
+        throw new Error(error.message);
+    }
+}
+
+export async function listColorSwatchFilenames(): Promise<string[]> {
+    const folder = (COLOR_SWATCH_FOLDER ?? '').trim();
+    const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+
+    try {
+        const { data, error } = await supabase.storage.from(COLOR_SWATCH_BUCKET).list(cleanFolder, {
+            limit: 1000,
+            offset: 0,
+            sortBy: { column: 'name', order: 'asc' }
+        });
+
+        if (error) {
+            console.error('Error listing color swatch filenames:', error.message);
+            return [];
+        }
+
+        return (data ?? [])
+            .map((entry) => validateFilename(entry.name))
+            .filter((name): name is string => !!name);
+    } catch (e) {
+        console.error('Error listing color swatch filenames', e);
         return [];
     }
 }

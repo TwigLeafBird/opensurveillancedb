@@ -5,6 +5,11 @@
 	import IconButton from '@smui/icon-button';
 	import CircularProgress from '@smui/circular-progress';
 	import { createDeviceColor, deleteDeviceColor, updateDeviceColor } from '$lib/supabaseClient';
+	import {
+		deleteColorSwatchFile,
+		getColorSwatchPublicUrl,
+		uploadColorSwatchFile
+	} from '$lib/storage';
 	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
 	import { getErrorMessage } from '$lib/errors';
 	import ColorOptionDialog from './ColorOptionDialog.svelte';
@@ -15,7 +20,12 @@
 
 	type ColorOptionDialogRef = {
 		openCreateDialog: () => void;
-		openEditDialog: (color: { code: string; name: string }) => void;
+		openEditDialog: (color: {
+			code: string;
+			name: string;
+			hex_code?: string | null;
+			swatch_icon?: string | null;
+		}) => void;
 	};
 
 	type ErrorSnackbarRef = {
@@ -28,6 +38,22 @@
 	let editingCode = $state<string | null>(null);
 	let creatingPending = $state(false);
 
+	function normalizeHexColor(value?: string | null): string | null {
+		if (!value) {
+			return null;
+		}
+
+		const trimmedValue = value.trim();
+		if (!trimmedValue) {
+			return null;
+		}
+
+		const candidate = trimmedValue.startsWith('#') ? trimmedValue : `#${trimmedValue}`;
+		return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(candidate)
+			? candidate
+			: null;
+	}
+
 	function showError(error: unknown, fallback: string) {
 		const message = getErrorMessage(error, fallback);
 		errorSnackbarRef?.show(message);
@@ -39,13 +65,37 @@
 		originalCode: string | null;
 		code: string;
 		name: string;
+		hex_code: string | null;
+		iconFile: File | null;
+		selectedSwatchIcon: string | null;
 	}) {
 		try {
 			if (detail.mode === 'create') {
 				creatingPending = true;
+				let uploadedSwatchIcon: string | null = null;
 				try {
-					await createDeviceColor({ code: detail.code, name: detail.name });
+					let nextSwatchIcon = detail.selectedSwatchIcon;
+					if (detail.iconFile) {
+						uploadedSwatchIcon = await uploadColorSwatchFile(detail.iconFile, detail.name);
+						nextSwatchIcon = uploadedSwatchIcon;
+					}
+
+					await createDeviceColor({
+						code: detail.code,
+						name: detail.name,
+						hex_code: detail.hex_code,
+						swatch_icon: nextSwatchIcon
+					});
 					await invalidateAll();
+				} catch (error) {
+					if (uploadedSwatchIcon) {
+						try {
+							await deleteColorSwatchFile(uploadedSwatchIcon);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					throw error;
 				} finally {
 					creatingPending = false;
 				}
@@ -55,9 +105,37 @@
 				}
 
 				editingCode = detail.originalCode;
+				let uploadedSwatchIcon: string | null = null;
+				const existingColor = colors.find((color) => color.code === detail.originalCode);
+				const currentSwatchIcon = existingColor?.swatch_icon ?? null;
 				try {
-					await updateDeviceColor(detail.originalCode, { code: detail.code, name: detail.name });
+					let nextSwatchIcon = detail.selectedSwatchIcon;
+					if (detail.iconFile) {
+						uploadedSwatchIcon = await uploadColorSwatchFile(detail.iconFile, detail.name);
+						nextSwatchIcon = uploadedSwatchIcon;
+					}
+
+					await updateDeviceColor(detail.originalCode, {
+						code: detail.code,
+						name: detail.name,
+						hex_code: detail.hex_code,
+						swatch_icon: nextSwatchIcon
+					});
+
+					if (uploadedSwatchIcon && currentSwatchIcon && currentSwatchIcon !== uploadedSwatchIcon) {
+						await deleteColorSwatchFile(currentSwatchIcon);
+					}
+
 					await invalidateAll();
+				} catch (error) {
+					if (uploadedSwatchIcon) {
+						try {
+							await deleteColorSwatchFile(uploadedSwatchIcon);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					throw error;
 				} finally {
 					editingCode = null;
 				}
@@ -116,7 +194,9 @@
 			<Head>
 				<Row>
 					<Cell>Code</Cell>
-					<Cell class="w-full">Name</Cell>
+					<Cell>Name</Cell>
+					<Cell>Hex</Cell>
+					<Cell class="w-full">Swatch Icon</Cell>
 					{#if canEdit}
 						<Cell>Actions</Cell>
 					{/if}
@@ -124,9 +204,36 @@
 			</Head>
 			<Body>
 				{#each colors as c (c.code)}
+					{@const hexColor = normalizeHexColor(c.hex_code)}
+					{@const swatchIconUrl = getColorSwatchPublicUrl(c.swatch_icon)}
 					<Row>
 						<Cell><code>{c.code}</code></Cell>
 						<Cell>{c.name}</Cell>
+						<Cell>
+							<div class="flex items-center gap-2">
+								<div
+									class="hex-swatch-border h-6 w-6 rounded-sm border"
+									style={`background-color:${hexColor ?? 'transparent'}`}
+								></div>
+								<span>{hexColor ?? '-'}</span>
+							</div>
+						</Cell>
+						<Cell>
+							{#if swatchIconUrl}
+								<div class="flex items-center gap-2">
+									<img
+										src={swatchIconUrl}
+										alt={c.name}
+										width="32"
+										height="32"
+										class="h-8 w-8 object-contain"
+									/>
+									<span>{c.swatch_icon}</span>
+								</div>
+							{:else}
+								-
+							{/if}
+						</Cell>
 						{#if canEdit}
 							<Cell>
 								{#if editingCode === c.code}
@@ -163,6 +270,12 @@
 						<Cell>
 							<CircularProgress class="h-8 w-8" indeterminate /></Cell
 						>
+						<Cell>
+							<CircularProgress class="h-8 w-8" indeterminate /></Cell
+						>
+						<Cell>
+							<CircularProgress class="h-8 w-8" indeterminate /></Cell
+						>
 						{#if canEdit}
 							<Cell>
 								<CircularProgress class="h-8 w-8" indeterminate />
@@ -174,3 +287,15 @@
 		</DataTable>
 	</div>
 {/if}
+
+<style>
+	.hex-swatch-border {
+		border-color: color-mix(in srgb, currentColor 55%, transparent);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.hex-swatch-border {
+			border-color: color-mix(in srgb, white 80%, transparent);
+		}
+	}
+</style>

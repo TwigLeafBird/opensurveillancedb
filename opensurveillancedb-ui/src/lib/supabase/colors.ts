@@ -15,11 +15,21 @@ export async function listDeviceColors(client: SupabaseClient<Database> = supaba
     return data ?? [];
 }
 
-export async function createDeviceColor(input: { code: string; name: string }): Promise<Color> {
+export async function createDeviceColor(input: {
+    code: string;
+    name: string;
+    hex_code?: string | null;
+    swatch_icon?: string | null;
+}): Promise<Color> {
     const { data, error } = await supabase
         .schema(SchemaName)
         .from('color')
-        .insert({ code: input.code, name: input.name })
+        .insert({
+            code: input.code,
+            name: input.name,
+            hex_code: input.hex_code ?? null,
+            swatch_icon: input.swatch_icon ?? null
+        })
         .select<'color', Color>()
         .single();
 
@@ -32,12 +42,22 @@ export async function createDeviceColor(input: { code: string; name: string }): 
 
 export async function updateDeviceColor(
     originalCode: string,
-    update: { code: string; name: string }
+    update: {
+        code: string;
+        name: string;
+        hex_code?: string | null;
+        swatch_icon?: string | null;
+    }
 ): Promise<Color> {
     const { data, error } = await supabase
         .schema(SchemaName)
         .from('color')
-        .update({ code: update.code, name: update.name })
+        .update({
+            code: update.code,
+            name: update.name,
+            hex_code: update.hex_code ?? null,
+            swatch_icon: update.swatch_icon ?? null
+        })
         .eq('code', originalCode)
         .select<'color', Color>()
         .single();

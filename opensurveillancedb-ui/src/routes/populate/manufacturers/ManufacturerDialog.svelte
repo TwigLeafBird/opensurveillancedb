@@ -125,7 +125,7 @@
 				previewUrl: URL.createObjectURL(file)
 			}))
 		];
-		if (!primaryIconKey && existingIcons.length === 0 && newIconFiles.length === 0) {
+		if (newIconFiles.length === 0) {
 			primaryIconKey = 'new:0';
 		}
 		iconInputKey += 1;

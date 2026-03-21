@@ -2,12 +2,16 @@ ALTER TABLE "opensurveillancedb-alphav1"."device_manufacturer"
 	ADD COLUMN "icons" text[] NOT NULL DEFAULT '{}'::text[];
 
 ALTER TABLE "opensurveillancedb-alphav1"."device_manufacturer"
-	ADD CONSTRAINT "device_brand_logos_not_blank"
+	ADD CONSTRAINT "device_manufacturer_icons_not_blank"
 	CHECK (
-		cardinality(array_remove(icons, NULL)) = cardinality(icons)
-		AND array_to_string(icons, ',', '') !~ '(^|,)\s*(,|$)'
-	)
-	NOT VALID;
+		icons IS NOT NULL
+		AND cardinality(array_remove(icons, NULL)) = cardinality(icons)
+		AND (
+			cardinality(icons) = 0
+			OR array_to_string(icons, ',', '') !~ '(^|,)\s*(,|$)'
+		)
+	);
+
 
 CREATE POLICY "Allow public reads from brand_logos"
 ON "storage"."objects"

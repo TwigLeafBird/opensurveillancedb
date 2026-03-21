@@ -73,9 +73,9 @@
 					<img
 						src={icon.url}
 						alt={`${manufacturerName} icon preview ${index + 1}`}
-						width="112"
-						height="112"
-						class="max-h-28 max-w-28 object-contain"
+						width="208"
+						height="208"
+						class="max-h-52 max-w-52 object-contain"
 					/>
 				</div>
 			</button>
@@ -128,9 +128,9 @@
 		z-index: 9999;
 		align-items: center;
 		justify-content: center;
-		min-width: 7.5rem;
-		min-height: 7.5rem;
-		padding: 0.75rem;
+		min-width: 13.5rem;
+		min-height: 13.5rem;
+		padding: 1.125rem;
 		border-radius: 0.75rem;
 		background: #f5f5f5;
 		border: 1px solid color-mix(in srgb, black 15%, transparent);

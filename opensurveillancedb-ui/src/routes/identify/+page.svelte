@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import Button, { Label } from '@smui/button';
+	import { page } from '$app/state';
 	import DataTable, { Body, Cell, Head, Row } from '@smui/data-table';
 	import SelectionTile from '$lib/SelectionTile.svelte';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
@@ -31,6 +33,11 @@
 	let selectedManufacturerIds = $state<string[]>([]);
 	let selectedShapeProfileIds = $state<string[]>([]);
 	let selectedColorCodes = $state<string[]>([]);
+	let syncingFromUrl = $state(false);
+
+	const QUERY_MANUFACTURER = 'manufacturer';
+	const QUERY_SHAPE = 'shape';
+	const QUERY_COLOR = 'color';
 
 	function toggleValue(values: string[], value: string): string[] {
 		return values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value];
@@ -47,6 +54,77 @@
 	function toggleColor(code: string) {
 		selectedColorCodes = toggleValue(selectedColorCodes, code);
 	}
+
+	function parseMultiValueParam(params: URLSearchParams, key: string): string[] {
+		const repeatedValues = params.getAll(key).flatMap((value) => value.split(','));
+		const trimmedValues = repeatedValues.map((value) => value.trim()).filter(Boolean);
+		return [...new Set(trimmedValues)];
+	}
+
+	function parseSelectionState(params: URLSearchParams) {
+		const validManufacturerIds = new Set(manufacturers.map((manufacturer) => manufacturer.id));
+		const validShapeProfileIds = new Set(shapeProfiles.map((shapeProfile) => shapeProfile.id));
+		const validColorCodes = new Set(colors.map((color) => color.code));
+
+		const manufacturerIds = parseMultiValueParam(params, QUERY_MANUFACTURER).filter((id) =>
+			validManufacturerIds.has(id)
+		);
+		const shapeProfileIds = parseMultiValueParam(params, QUERY_SHAPE).filter((id) =>
+			validShapeProfileIds.has(id)
+		);
+		const colorCodes = parseMultiValueParam(params, QUERY_COLOR).filter((code) =>
+			validColorCodes.has(code)
+		);
+
+		return { manufacturerIds, shapeProfileIds, colorCodes };
+	}
+
+	$effect(() => {
+		if (!browser) {
+			return;
+		}
+
+		const { manufacturerIds, shapeProfileIds, colorCodes } = parseSelectionState(
+			page.url.searchParams
+		);
+
+		syncingFromUrl = true;
+		selectedManufacturerIds = manufacturerIds;
+		selectedShapeProfileIds = shapeProfileIds;
+		selectedColorCodes = colorCodes;
+		syncingFromUrl = false;
+	});
+
+	$effect(() => {
+		if (!browser || syncingFromUrl) {
+			return;
+		}
+
+		const nextParams = new URLSearchParams(page.url.search);
+		nextParams.delete(QUERY_MANUFACTURER);
+		nextParams.delete(QUERY_SHAPE);
+		nextParams.delete(QUERY_COLOR);
+
+		for (const manufacturerId of selectedManufacturerIds) {
+			nextParams.append(QUERY_MANUFACTURER, manufacturerId);
+		}
+
+		for (const shapeProfileId of selectedShapeProfileIds) {
+			nextParams.append(QUERY_SHAPE, shapeProfileId);
+		}
+
+		for (const colorCode of selectedColorCodes) {
+			nextParams.append(QUERY_COLOR, colorCode);
+		}
+
+		const nextSearch = nextParams.toString();
+		const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`;
+		const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+		if (nextUrl !== currentUrl) {
+			window.history.replaceState(window.history.state, '', nextUrl);
+		}
+	});
 
 	function normalizeHexColor(value?: string | null): string | null {
 		if (!value) {

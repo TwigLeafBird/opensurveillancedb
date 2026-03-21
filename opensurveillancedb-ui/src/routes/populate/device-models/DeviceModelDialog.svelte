@@ -169,8 +169,8 @@
 				{/each}
 			</Select>
 
-			<fieldset class="border-none m-0 p-0">
-				<legend class="p-0 mb-1">Shape Profile</legend>
+			<fieldset class="m-0 border-none p-0">
+				<legend class="mb-1 p-0">Shape Profile</legend>
 				<div
 					class="flex max-h-[180px] flex-col gap-1 overflow-auto rounded border border-current p-2"
 				>
@@ -194,9 +194,7 @@
 									alt={shapeProfile.short_name}
 									size={24}
 								/>
-								<label for={`shape-profile-${shapeProfile.id}`}
-									>{shapeProfile.short_name} ({shapeProfile.id})</label
-								>
+								<label for={`shape-profile-${shapeProfile.id}`}>{shapeProfile.short_name}</label>
 							</div>
 						{/each}
 					{/if}
@@ -230,7 +228,7 @@
 						{#each colors as color}
 							<label class="flex items-center gap-2">
 								<Checkbox bind:group={selectedColorIds} value={color.code} />
-								<span>{color.name} ({color.code})</span>
+								<span>{color.name}</span>
 							</label>
 						{/each}
 					{/if}
@@ -248,7 +246,7 @@
 						{#each locations as location}
 							<label class="flex items-center gap-2">
 								<Checkbox bind:group={selectedLocationCodes} value={location.code} />
-								<span>{location.name} ({location.code})</span>
+								<span>{location.name}</span>
 							</label>
 						{/each}
 					{/if}

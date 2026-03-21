@@ -83,16 +83,19 @@ export type Database = {
       device_manufacturer: {
         Row: {
           alternate_names: string[] | null
+          icons: string[]
           id: string
           name: string
         }
         Insert: {
           alternate_names?: string[] | null
+          icons?: string[]
           id?: string
           name: string
         }
         Update: {
           alternate_names?: string[] | null
+          icons?: string[]
           id?: string
           name?: string
         }

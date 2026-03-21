@@ -4,7 +4,8 @@
 	import SelectionTile from '$lib/SelectionTile.svelte';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
 	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
-	import { getColorSwatchPublicUrl } from '$lib/storage';
+	import ManufacturerIconList from '$lib/ManufacturerIconList.svelte';
+	import { getColorSwatchPublicUrl, getManufacturerIconPublicUrl } from '$lib/storage';
 	import { sanitizeHref } from '$lib/url';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import type { PageData } from './$types';
@@ -13,7 +14,7 @@
 
 	const deviceInfos = $derived((data?.deviceInfos ?? []) as DeviceInfo[]);
 	const manufacturers = $derived(
-		(data?.manufacturers ?? []) as Array<{ id: string; name: string }>
+		(data?.manufacturers ?? []) as Array<{ id: string; name: string; icons?: string[] | null }>
 	);
 	const shapeProfiles = $derived(
 		(data?.shapeProfiles ?? []) as Array<{ id: string; short_name: string; icon?: string | null }>
@@ -105,8 +106,12 @@
 			<h3 class="m-0 text-base">Manufacturer</h3>
 			<div class="grid [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))] gap-4">
 				{#each manufacturers as manufacturer (manufacturer.id)}
+					{@const primaryLogoUrl = getManufacturerIconPublicUrl(manufacturer.icons?.[0] ?? null)}
 					<SelectionTile
 						label={manufacturer.name}
+						hideLabel={!!primaryLogoUrl}
+						imageSrc={primaryLogoUrl}
+						imageAlt={manufacturer.name}
 						selected={selectedManufacturerIds.includes(manufacturer.id)}
 						onclick={() => toggleManufacturer(manufacturer.id)}
 					/>
@@ -217,10 +222,13 @@
 								>
 									<code>{deviceInfo.id}</code>
 								</Cell>
-								<Cell
-									style="width:15%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-									>{deviceInfo.manufacturer?.name ?? '-'}</Cell
-								>
+								<Cell style="width:15%;">
+									<ManufacturerIconList
+										icons={deviceInfo.manufacturer?.icons ?? []}
+										manufacturerName={deviceInfo.manufacturer?.name ?? 'Manufacturer'}
+										emptyText={deviceInfo.manufacturer?.name ?? '-'}
+									/>
+								</Cell>
 								<Cell>
 									<div style="display:flex; align-items:center; gap:8px; min-width:0;">
 										<ShapeIcon

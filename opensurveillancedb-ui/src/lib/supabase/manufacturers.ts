@@ -24,6 +24,7 @@ export async function createDeviceManufacturer(input: {
     id: string;
     name: string;
     alternate_names?: string[] | null;
+    icons?: string[];
 }): Promise<DeviceManufacturer> {
     const { data, error } = await supabase
         .schema(SchemaName)
@@ -31,7 +32,8 @@ export async function createDeviceManufacturer(input: {
         .insert({
             id: input.id,
             name: input.name,
-            alternate_names: input.alternate_names ?? null
+            alternate_names: input.alternate_names ?? null,
+            icons: input.icons ?? []
         })
         .select<'device_manufacturer', DeviceManufacturer>()
         .single();
@@ -45,7 +47,7 @@ export async function createDeviceManufacturer(input: {
 
 export async function updateDeviceManufacturer(
     originalId: string,
-    update: { id: string; name: string; alternate_names?: string[] | null }
+    update: { id: string; name: string; alternate_names?: string[] | null; icons?: string[] }
 ): Promise<DeviceManufacturer> {
     const { data, error } = await supabase
         .schema(SchemaName)
@@ -53,7 +55,8 @@ export async function updateDeviceManufacturer(
         .update({
             id: update.id,
             name: update.name,
-            alternate_names: update.alternate_names ?? null
+            alternate_names: update.alternate_names ?? null,
+            icons: update.icons ?? []
         })
         .eq('id', originalId)
         .select<'device_manufacturer', DeviceManufacturer>()

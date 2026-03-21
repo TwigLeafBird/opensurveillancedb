@@ -185,8 +185,7 @@
 			<Head>
 				<Row>
 					<Cell class="w-[20%] overflow-hidden text-ellipsis whitespace-nowrap">Name</Cell>
-					<Cell class="w-[8%] overflow-hidden text-ellipsis whitespace-nowrap">ID</Cell>
-					<Cell class="w-[15%] overflow-hidden text-ellipsis whitespace-nowrap">Manufacturer</Cell>
+					<Cell class="w-[10%] overflow-hidden text-ellipsis whitespace-nowrap">Manufacturer</Cell>
 					<Cell class="w-[20%] overflow-hidden text-ellipsis whitespace-nowrap">Shape Profile</Cell>
 					<Cell class="w-[12%] overflow-hidden text-ellipsis whitespace-nowrap">Colors</Cell>
 					<Cell class="w-[15%] whitespace-normal">Possible Locations</Cell>
@@ -201,11 +200,15 @@
 			<Body>
 				{#each deviceInfos as m (m.id)}
 					<Row>
-						<Cell class="w-[20%] overflow-hidden text-ellipsis whitespace-nowrap">{m.name}</Cell>
-						<Cell class="w-[8%] overflow-hidden text-ellipsis whitespace-nowrap"
-							><code>{m.id}</code></Cell
-						>
-						<Cell class="w-[15%] overflow-hidden text-ellipsis whitespace-nowrap"
+						<Cell class="w-[20%] overflow-hidden">
+							<div class="flex min-w-0 flex-col gap-0.5">
+								<strong class="overflow-hidden text-[0.95rem] text-ellipsis whitespace-nowrap"
+									>{m.name}</strong
+								>
+								<code class="text-[0.7rem] opacity-80">{m.id}</code>
+							</div>
+						</Cell>
+						<Cell class="w-[10%] overflow-hidden text-ellipsis whitespace-nowrap"
 							>{m.manufacturer?.name ?? '-'}</Cell
 						>
 						<Cell>
@@ -280,7 +283,6 @@
 				{/each}
 				{#if creatingPending}
 					<Row>
-						<Cell></Cell>
 						<Cell></Cell>
 						<Cell></Cell>
 						<Cell></Cell>

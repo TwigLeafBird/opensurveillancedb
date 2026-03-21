@@ -268,10 +268,7 @@
 							<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
 								>Name</Cell
 							>
-							<Cell style="width:8%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>ID</Cell
-							>
-							<Cell style="width:15%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+							<Cell style="width:10%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
 								>Manufacturer</Cell
 							>
 							<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
@@ -294,15 +291,17 @@
 						{#each filteredDeviceInfos as deviceInfo (deviceInfo.id)}
 							<Row>
 								<Cell
-									style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-									>{deviceInfo.name}</Cell
+									style="width:20%; white-space:normal; overflow:hidden; text-overflow:ellipsis;"
 								>
-								<Cell
-									style="width:8%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>
-									<code>{deviceInfo.id}</code>
+									<div style="display:flex; flex-direction:column; gap:0.125rem; min-width:0;">
+										<strong
+											style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.95rem;"
+											>{deviceInfo.name}</strong
+										>
+										<code style="font-size:0.7rem; opacity:0.8;">{deviceInfo.id}</code>
+									</div>
 								</Cell>
-								<Cell style="width:15%;">
+								<Cell style="width:10%;">
 									<ManufacturerIconList
 										icons={deviceInfo.manufacturer?.icons ?? []}
 										manufacturerName={deviceInfo.manufacturer?.name ?? 'Manufacturer'}

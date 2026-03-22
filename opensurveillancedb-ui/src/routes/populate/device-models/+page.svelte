@@ -10,6 +10,7 @@
 	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
 	import { getErrorMessage } from '$lib/errors';
 	import { createDeviceModel, updateDeviceModel, deleteDeviceModel } from '$lib/supabaseClient';
+	import { deleteModelExampleImageFile, uploadModelExampleImageFile } from '$lib/storage';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import DeviceModelDialog from './DeviceModelDialog.svelte';
 
@@ -41,6 +42,7 @@
 			shape_profile_id?: string | null;
 			datasheet_url?: string | null;
 			product_url?: string | null;
+			example_images?: string[] | null;
 			color_ids?: string[];
 			location_codes?: string[];
 		}) => void;
@@ -70,23 +72,40 @@
 		shape_profile: string | null;
 		datasheet_url: string | null;
 		product_url: string | null;
+		existing_example_images: string[];
+		new_example_image_files: File[];
 		color_ids: string[];
 		location_codes: string[];
 	}) {
 		try {
 			if (detail.mode === 'create') {
 				creatingPending = true;
+				const uploadedExampleImages: string[] = [];
 				try {
+					for (const file of detail.new_example_image_files) {
+						uploadedExampleImages.push(await uploadModelExampleImageFile(file, detail.name));
+					}
+
 					await createDeviceModel({
 						name: detail.name,
 						manufacturer: detail.manufacturer,
 						shape_profile: detail.shape_profile,
 						datasheet_url: detail.datasheet_url,
 						product_url: detail.product_url,
+						example_images: [...detail.existing_example_images, ...uploadedExampleImages],
 						color_ids: detail.color_ids,
 						location_codes: detail.location_codes
 					});
 					await invalidateAll();
+				} catch (error) {
+					for (const uploadedExampleImage of uploadedExampleImages) {
+						try {
+							await deleteModelExampleImageFile(uploadedExampleImage);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					throw error;
 				} finally {
 					creatingPending = false;
 				}
@@ -96,17 +115,47 @@
 				}
 
 				editingId = detail.originalId;
+				const uploadedExampleImages: string[] = [];
+				const existingModel = deviceInfos.find((deviceInfo) => deviceInfo.id === detail.originalId);
+				const currentExampleImages = existingModel?.example_images ?? [];
 				try {
+					for (const file of detail.new_example_image_files) {
+						uploadedExampleImages.push(await uploadModelExampleImageFile(file, detail.name));
+					}
+
+					const nextExampleImages = [...detail.existing_example_images, ...uploadedExampleImages];
+
 					await updateDeviceModel(detail.originalId, {
 						name: detail.name,
 						manufacturer: detail.manufacturer,
 						shape_profile: detail.shape_profile,
 						datasheet_url: detail.datasheet_url,
 						product_url: detail.product_url,
+						example_images: nextExampleImages,
 						color_ids: detail.color_ids,
 						location_codes: detail.location_codes
 					});
+
+					const removedExampleImages = currentExampleImages.filter(
+						(filename) => !nextExampleImages.includes(filename)
+					);
+					for (const removedExampleImage of removedExampleImages) {
+						try {
+							await deleteModelExampleImageFile(removedExampleImage);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
 					await invalidateAll();
+				} catch (error) {
+					for (const uploadedExampleImage of uploadedExampleImages) {
+						try {
+							await deleteModelExampleImageFile(uploadedExampleImage);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					throw error;
 				} finally {
 					editingId = null;
 				}
@@ -144,6 +193,7 @@
 			shape_profile_id: model.device_shape_profile?.id ?? model.shape_profile ?? null,
 			datasheet_url: model.datasheet_url ?? null,
 			product_url: model.product_url ?? null,
+			example_images: model.example_images ?? [],
 			color_ids: (model.device_color_option ?? []).map((option) => option.color_id),
 			location_codes: (model.device_possible_location ?? []).map((option) => option.location_code)
 		});

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ImageHoverPreview from '$lib/ImageHoverPreview.svelte';
 	import { getManufacturerIconPublicUrl } from '$lib/storage';
 
 	type Props = {
@@ -9,138 +10,31 @@
 
 	let { icons = [], manufacturerName, emptyText = '-' }: Props = $props();
 
-	const iconUrls = $derived(
-		(icons ?? [])
-			.map((filename) => ({ filename, url: getManufacturerIconPublicUrl(filename) }))
-			.filter((entry) => !!entry.url)
+	const iconUrls = $derived.by(() =>
+		(icons ?? []).flatMap((filename) => {
+			const url = getManufacturerIconPublicUrl(filename);
+			return url ? [{ filename, url }] : [];
+		})
 	);
-
-	let previewPos = $state({ top: '0px', left: '0px', display: 'none' });
-	let triggerRefs: HTMLDivElement[] = [];
-
-	function updatePreviewPosition(trigger: HTMLDivElement, preview: HTMLDivElement) {
-		const triggerRect = trigger.getBoundingClientRect();
-		const triggerCenterX = triggerRect.left + triggerRect.width / 2;
-		const triggerTopY = triggerRect.top;
-
-		preview.style.top = triggerTopY - 12 + 'px';
-		preview.style.left = triggerCenterX + 'px';
-		preview.style.transform = 'translate(-50%, -100%)';
-	}
-
-	function handleTriggerMouseEnter(event: MouseEvent, preview: HTMLDivElement) {
-		const trigger = event.currentTarget as HTMLDivElement;
-		updatePreviewPosition(trigger, preview);
-	}
 </script>
 
 {#if iconUrls.length > 0}
-	<div class="manufacturer-icons-wrap">
+	<div
+		class="relative flex items-center gap-1.5 overflow-x-auto overflow-y-visible py-1 pl-2 whitespace-nowrap"
+	>
 		{#each iconUrls as icon, index (`${icon.filename}-${index}`)}
-			<button
-				type="button"
-				class="manufacturer-icon-trigger"
-				aria-label={`${manufacturerName} icon ${index + 1}`}
-				style="all: unset; cursor: default;"
-				onmouseenter={(e) => {
-					const preview = (e.currentTarget as HTMLElement).querySelector(
-						'.manufacturer-icon-preview'
-					) as HTMLDivElement;
-					if (preview) {
-						preview.style.display = 'flex';
-						handleTriggerMouseEnter(e as any, preview);
-					}
-				}}
-				onmouseleave={(e) => {
-					const preview = (e.currentTarget as HTMLElement).querySelector(
-						'.manufacturer-icon-preview'
-					) as HTMLDivElement;
-					if (preview) {
-						preview.style.display = 'none';
-					}
-				}}
-			>
-				<div class:manufacturer-icon-thumb-primary={index === 0} class="manufacturer-icon-thumb">
-					<img
-						src={icon.url}
-						alt={`${manufacturerName} icon ${index + 1}`}
-						width="24"
-						height="24"
-						class="h-6 w-6 object-contain"
-					/>
-				</div>
-				<div class="manufacturer-icon-preview" role="tooltip" aria-hidden="true">
-					<img
-						src={icon.url}
-						alt={`${manufacturerName} icon preview ${index + 1}`}
-						width="208"
-						height="208"
-						class="max-h-52 max-w-52 object-contain"
-					/>
-				</div>
-			</button>
+			<ImageHoverPreview
+				src={icon.url}
+				alt={`${manufacturerName} icon ${index + 1}`}
+				ariaLabel={`${manufacturerName} icon ${index + 1}`}
+				thumbnailWidth={24}
+				thumbnailHeight={24}
+				thumbnailFrameClass={`flex h-8 w-8 flex-none items-center justify-center rounded-[0.4rem] border border-[color:color-mix(in_srgb,black_15%,transparent)] bg-[#f5f5f5] p-[0.2rem] ${index === 0 ? 'outline-2 outline-offset-[1px] outline-[var(--mdc-theme-primary,#ff3e00)] shadow-[0_0_0_1px_color-mix(in_srgb,var(--mdc-theme-primary,#ff3e00)_35%,transparent)]' : ''}`}
+				thumbnailImageClass="h-6 w-6 object-contain"
+				previewImageClass="max-h-52 max-w-52 object-contain"
+			/>
 		{/each}
 	</div>
 {:else}
 	{emptyText}
 {/if}
-
-<style>
-	.manufacturer-icons-wrap {
-		position: relative;
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		overflow-x: auto;
-		overflow-y: visible;
-		padding-block: 0.25rem;
-		padding-left: 0.5rem;
-		white-space: nowrap;
-	}
-
-	.manufacturer-icon-trigger {
-		position: relative;
-		display: inline-flex;
-	}
-
-	.manufacturer-icon-thumb {
-		display: flex;
-		flex: 0 0 auto;
-		align-items: center;
-		justify-content: center;
-		width: 2rem;
-		height: 2rem;
-		padding: 0.2rem;
-		border-radius: 0.4rem;
-		background: #f5f5f5;
-		border: 1px solid color-mix(in srgb, black 15%, transparent);
-	}
-
-	.manufacturer-icon-thumb-primary {
-		outline: 2px solid var(--mdc-theme-primary, #ff3e00);
-		outline-offset: 1px;
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--mdc-theme-primary, #ff3e00) 35%, transparent);
-	}
-
-	.manufacturer-icon-preview {
-		position: fixed;
-		display: none;
-		z-index: 9999;
-		align-items: center;
-		justify-content: center;
-		min-width: 13.5rem;
-		min-height: 13.5rem;
-		padding: 1.125rem;
-		border-radius: 0.75rem;
-		background: #f5f5f5;
-		border: 1px solid color-mix(in srgb, black 15%, transparent);
-		box-shadow: 0 8px 24px color-mix(in srgb, black 35%, transparent);
-		pointer-events: none;
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.manufacturer-icon-preview {
-			box-shadow: 0 8px 24px color-mix(in srgb, black 55%, transparent);
-		}
-	}
-</style>

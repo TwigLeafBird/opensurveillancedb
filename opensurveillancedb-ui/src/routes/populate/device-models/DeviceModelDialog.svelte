@@ -3,7 +3,9 @@
 	import Dialog, { Title, Content, Actions } from '@smui/dialog';
 	import Select, { Option } from '@smui/select';
 	import Checkbox from '@smui/checkbox';
+	import ImageHoverPreview from '$lib/ImageHoverPreview.svelte';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
+	import { getModelExampleImagePublicUrl, validateImageFile } from '$lib/storage';
 
 	type DialogMode = 'create' | 'edit';
 	type ManufacturerOption = { id: string; name: string };
@@ -17,6 +19,7 @@
 		shape_profile_id?: string | null;
 		datasheet_url?: string | null;
 		product_url?: string | null;
+		example_images?: string[] | null;
 		color_ids?: string[];
 		location_codes?: string[];
 	};
@@ -28,8 +31,15 @@
 		shape_profile: string | null;
 		datasheet_url: string | null;
 		product_url: string | null;
+		existing_example_images: string[];
+		new_example_image_files: File[];
 		color_ids: string[];
 		location_codes: string[];
+	};
+
+	type PendingExampleImageFile = {
+		file: File;
+		previewUrl: string;
 	};
 
 	let {
@@ -54,12 +64,37 @@
 	let shapeProfileId = $state('');
 	let datasheetUrl = $state('');
 	let productUrl = $state('');
+	let existingExampleImages = $state<string[]>([]);
+	let newExampleImageFiles = $state<PendingExampleImageFile[]>([]);
+	let exampleImageInputKey = $state(0);
 	let selectedColorIds = $state<string[]>([]);
 	let selectedLocationCodes = $state<string[]>([]);
 	let saving = $state(false);
 	let formError = $state('');
 
+	const exampleImageItems = $derived([
+		...existingExampleImages.map((filename) => ({
+			key: `existing:${filename}`,
+			filename,
+			isExisting: true,
+			previewUrl: getModelExampleImagePublicUrl(filename)
+		})),
+		...newExampleImageFiles.map((pendingFile, index) => ({
+			key: `new:${index}`,
+			filename: pendingFile.file.name,
+			isExisting: false,
+			previewUrl: pendingFile.previewUrl
+		}))
+	]);
+
+	function revokePendingExampleImagePreviews() {
+		for (const pendingFile of newExampleImageFiles) {
+			URL.revokeObjectURL(pendingFile.previewUrl);
+		}
+	}
+
 	function reset() {
+		revokePendingExampleImagePreviews();
 		open = false;
 		mode = 'create';
 		originalId = '';
@@ -68,6 +103,9 @@
 		shapeProfileId = '';
 		datasheetUrl = '';
 		productUrl = '';
+		existingExampleImages = [];
+		newExampleImageFiles = [];
+		exampleImageInputKey += 1;
 		selectedColorIds = [];
 		selectedLocationCodes = [];
 		saving = false;
@@ -82,6 +120,9 @@
 		shapeProfileId = '';
 		datasheetUrl = '';
 		productUrl = '';
+		existingExampleImages = [];
+		newExampleImageFiles = [];
+		exampleImageInputKey += 1;
 		selectedColorIds = [];
 		selectedLocationCodes = [];
 		formError = '';
@@ -96,10 +137,49 @@
 		shapeProfileId = deviceModel.shape_profile_id ?? '';
 		datasheetUrl = deviceModel.datasheet_url ?? '';
 		productUrl = deviceModel.product_url ?? '';
+		existingExampleImages = [...(deviceModel.example_images ?? [])];
+		newExampleImageFiles = [];
+		exampleImageInputKey += 1;
 		selectedColorIds = [...(deviceModel.color_ids ?? [])];
 		selectedLocationCodes = [...(deviceModel.location_codes ?? [])];
 		formError = '';
 		open = true;
+	}
+
+	function onExampleImageFilesChange(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const selectedFiles = Array.from(input.files ?? []);
+
+		if (selectedFiles.length === 0) {
+			return;
+		}
+
+		const invalidFile = selectedFiles.find((file) => !validateImageFile(file));
+		if (invalidFile) {
+			formError = 'All example images must be PNG, JPG, JPEG, GIF, or SVG images.';
+			return;
+		}
+
+		newExampleImageFiles = [
+			...newExampleImageFiles,
+			...selectedFiles.map((file) => ({
+				file,
+				previewUrl: URL.createObjectURL(file)
+			}))
+		];
+		exampleImageInputKey += 1;
+	}
+
+	function removeExistingExampleImage(filename: string) {
+		existingExampleImages = existingExampleImages.filter((entry) => entry !== filename);
+	}
+
+	function removeNewExampleImage(index: number) {
+		const pendingFile = newExampleImageFiles[index];
+		if (pendingFile) {
+			URL.revokeObjectURL(pendingFile.previewUrl);
+		}
+		newExampleImageFiles = newExampleImageFiles.filter((_, itemIndex) => itemIndex !== index);
 	}
 
 	async function save() {
@@ -124,6 +204,8 @@
 				shape_profile: shapeProfileId || null,
 				datasheet_url: trimmedDatasheet || null,
 				product_url: trimmedProduct || null,
+				existing_example_images: [...existingExampleImages],
+				new_example_image_files: newExampleImageFiles.map((pendingFile) => pendingFile.file),
 				color_ids: [...selectedColorIds],
 				location_codes: [...selectedLocationCodes]
 			});
@@ -217,6 +299,65 @@
 				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
 
+			<label for="device-model-example-images">Upload Example Images</label>
+			{#key exampleImageInputKey}
+				<input
+					id="device-model-example-images"
+					type="file"
+					multiple
+					accept=".png,.jpg,.jpeg,.gif,.svg,image/png,image/jpeg,image/gif,image/svg+xml"
+					onchange={onExampleImageFilesChange}
+					class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
+				/>
+			{/key}
+
+			{#if exampleImageItems.length > 0}
+				<p class="m-0 text-sm opacity-80">Example images are shown in a horizontal scroller.</p>
+				<div class="overflow-x-auto rounded border border-current/30 p-2">
+					<div class="flex min-w-max gap-3">
+						{#each exampleImageItems as item (item.key)}
+							<div
+								class="flex w-36 min-w-36 flex-shrink-0 flex-col items-center gap-2 rounded border border-current/30 p-2"
+							>
+								{#if item.previewUrl}
+									<ImageHoverPreview
+										src={item.previewUrl}
+										alt={`${name || 'Device model'} example image`}
+										ariaLabel={`Preview ${item.filename}`}
+										thumbnailWidth={96}
+										thumbnailHeight={96}
+										previewWidth={512}
+										previewHeight={512}
+										thumbnailFrameClass="example-image-frame"
+										thumbnailImageClass="h-24 w-24 object-contain"
+										previewImageClass="max-h-[30rem] max-w-[30rem] object-contain"
+									/>
+								{:else}
+									<div
+										class="example-image-frame flex h-24 w-24 items-center justify-center rounded-md text-center text-[11px] leading-tight opacity-70"
+									>
+										no preview
+									</div>
+								{/if}
+								<div class="w-full text-center text-xs break-all opacity-80">{item.filename}</div>
+								<Button
+									variant="outlined"
+									onclick={() => {
+										if (item.isExisting) {
+											removeExistingExampleImage(item.filename);
+										} else {
+											removeNewExampleImage(Number(item.key.replace('new:', '')));
+										}
+									}}
+								>
+									<span class="mdc-button__label">Remove</span>
+								</Button>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
 			<div>
 				<p class="mt-0 mr-0 mb-1 ml-0">Colors</p>
 				<div
@@ -267,3 +408,22 @@
 		</Button>
 	</Actions>
 </Dialog>
+
+<style>
+	.example-image-frame {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.5rem;
+		border-radius: 0.5rem;
+		background: color-mix(in srgb, black 82%, white 18%);
+		border: 1px solid color-mix(in srgb, black 65%, transparent);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.example-image-frame {
+			background: color-mix(in srgb, white 92%, transparent);
+			border-color: color-mix(in srgb, white 78%, transparent);
+		}
+	}
+</style>

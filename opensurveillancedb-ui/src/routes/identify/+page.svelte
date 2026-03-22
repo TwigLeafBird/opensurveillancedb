@@ -7,7 +7,12 @@
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
 	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
 	import ManufacturerIconList from '$lib/ManufacturerIconList.svelte';
-	import { getColorSwatchPublicUrl, getManufacturerIconPublicUrl } from '$lib/storage';
+	import ImageGalleryHoverPreview from '$lib/ImageGalleryHoverPreview.svelte';
+	import {
+		getColorSwatchPublicUrl,
+		getManufacturerIconPublicUrl,
+		getModelExampleImagePublicUrl
+	} from '$lib/storage';
 	import { sanitizeHref } from '$lib/url';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import type { PageData } from './$types';
@@ -289,15 +294,38 @@
 
 					<Body>
 						{#each filteredDeviceInfos as deviceInfo (deviceInfo.id)}
+							{@const exampleImageEntries = (deviceInfo.example_images ?? []).flatMap((filename, index) => {
+								const url = getModelExampleImagePublicUrl(filename);
+								return url
+									? [{
+											src: url,
+											alt: `${deviceInfo.name} example image ${index + 1}`,
+											key: `${deviceInfo.id}-${filename}-${index}`
+									  }]
+									: [];
+							})}
 							<Row>
 								<Cell
 									style="width:20%; white-space:normal; overflow:hidden; text-overflow:ellipsis;"
 								>
-									<div style="display:flex; flex-direction:column; gap:0.125rem; min-width:0;">
-										<strong
-											style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.95rem;"
-											>{deviceInfo.name}</strong
+									<div style="display:flex; flex-direction:column; gap:0.25rem; min-width:0;">
+										<div
+											style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.5rem; min-width:0;"
 										>
+											<strong
+												style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.95rem; min-width:0; flex:1;"
+												>{deviceInfo.name}</strong
+											>
+											{#if exampleImageEntries.length > 0}
+												<ImageGalleryHoverPreview
+													images={exampleImageEntries}
+													ariaLabel={`Preview ${deviceInfo.name} example images`}
+													panelLabel={`${deviceInfo.name} example images`}
+													buttonLabel={String(exampleImageEntries.length)}
+													buttonClass="mt-0.5 flex-none"
+												/>
+											{/if}
+										</div>
 										<code style="font-size:0.7rem; opacity:0.8;">{deviceInfo.id}</code>
 									</div>
 								</Cell>

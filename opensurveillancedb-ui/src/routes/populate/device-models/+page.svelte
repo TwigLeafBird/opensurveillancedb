@@ -6,11 +6,16 @@
 	import CircularProgress from '@smui/circular-progress';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
 	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
+	import ImageGalleryHoverPreview from '$lib/ImageGalleryHoverPreview.svelte';
 	import { sanitizeHref } from '$lib/url';
 	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
 	import { getErrorMessage } from '$lib/errors';
 	import { createDeviceModel, updateDeviceModel, deleteDeviceModel } from '$lib/supabaseClient';
-	import { deleteModelExampleImageFile, uploadModelExampleImageFile } from '$lib/storage';
+	import {
+		deleteModelExampleImageFile,
+		getModelExampleImagePublicUrl,
+		uploadModelExampleImageFile
+	} from '$lib/storage';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import DeviceModelDialog from './DeviceModelDialog.svelte';
 
@@ -249,12 +254,29 @@
 
 			<Body>
 				{#each deviceInfos as m (m.id)}
+					{@const exampleImageEntries = (m.example_images ?? []).flatMap((filename, index) => {
+						const url = getModelExampleImagePublicUrl(filename);
+						return url
+							? [{ src: url, alt: `${m.name} example image ${index + 1}`, key: `${m.id}-${filename}-${index}` }]
+							: [];
+					})}
 					<Row>
 						<Cell class="w-[20%] overflow-hidden">
-							<div class="flex min-w-0 flex-col gap-0.5">
-								<strong class="overflow-hidden text-[0.95rem] text-ellipsis whitespace-nowrap"
-									>{m.name}</strong
-								>
+							<div class="flex min-w-0 flex-col gap-1">
+								<div class="flex min-w-0 items-start justify-between gap-2">
+									<strong class="min-w-0 flex-1 overflow-hidden text-[0.95rem] text-ellipsis whitespace-nowrap"
+										>{m.name}</strong
+									>
+									{#if exampleImageEntries.length > 0}
+										<ImageGalleryHoverPreview
+											images={exampleImageEntries}
+											ariaLabel={`Preview ${m.name} example images`}
+											panelLabel={`${m.name} example images`}
+											buttonLabel={String(exampleImageEntries.length)}
+											buttonClass="mt-0.5 flex-none"
+										/>
+									{/if}
+								</div>
 								<code class="text-[0.7rem] opacity-80">{m.id}</code>
 							</div>
 						</Cell>

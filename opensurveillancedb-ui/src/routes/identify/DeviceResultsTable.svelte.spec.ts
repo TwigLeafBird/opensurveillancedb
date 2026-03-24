@@ -24,6 +24,7 @@ function createDevice(overrides: Record<string, unknown>) {
 	return {
 		id: 'dev-1',
 		name: 'Default Device',
+		distinguishing_features: [],
 		example_images: [],
 		manufacturer: null,
 		device_shape_profile: null,
@@ -90,6 +91,32 @@ describe('DeviceResultsTable', () => {
 
 		await expect
 			.element(page.getByRole('button', { name: 'Preview No Preview Camera example images' }))
+			.not.toBeInTheDocument();
+	});
+
+	it('renders distinguishing-features preview trigger only when distinguishing features exist', async () => {
+		render(DeviceResultsTable, {
+			deviceInfos: [
+				createDevice({
+					name: 'Detailed Camera',
+					distinguishing_features: ['Dual antenna bumps', 'Blue status LED ring']
+				}),
+				createDevice({
+					id: 'dev-2',
+					name: 'Plain Camera',
+					distinguishing_features: []
+				})
+			]
+		});
+
+		const detailsTrigger = page.getByRole('button', {
+			name: 'Preview Detailed Camera distinguishing features'
+		});
+		await expect.element(detailsTrigger).toBeVisible();
+		await expect.element(detailsTrigger).toHaveTextContent('2');
+
+		await expect
+			.element(page.getByRole('button', { name: 'Preview Plain Camera distinguishing features' }))
 			.not.toBeInTheDocument();
 	});
 

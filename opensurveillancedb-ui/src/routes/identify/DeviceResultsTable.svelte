@@ -4,6 +4,7 @@
 	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
 	import ManufacturerIconList from '$lib/ManufacturerIconList.svelte';
 	import ImageGalleryHoverPreview from '$lib/ImageGalleryHoverPreview.svelte';
+	import TextListHoverPreview from '$lib/TextListHoverPreview.svelte';
 	import { getModelExampleImagePublicUrl } from '$lib/storage';
 	import { sanitizeHref } from '$lib/url';
 	import type { DeviceInfo } from '$lib/supabaseClient';
@@ -72,6 +73,15 @@
 											ariaLabel={`Preview ${deviceInfo.name} example images`}
 											panelLabel={`${deviceInfo.name} example images`}
 											buttonLabel={String(exampleImageEntries.length)}
+											buttonClass="mt-0.5 flex-none"
+										/>
+									{/if}
+									{#if (deviceInfo.distinguishing_features ?? []).length > 0}
+										<TextListHoverPreview
+											items={deviceInfo.distinguishing_features ?? []}
+											ariaLabel={`Preview ${deviceInfo.name} distinguishing features`}
+											panelLabel={`${deviceInfo.name} distinguishing features`}
+											buttonLabel={String((deviceInfo.distinguishing_features ?? []).length)}
 											buttonClass="mt-0.5 flex-none"
 										/>
 									{/if}

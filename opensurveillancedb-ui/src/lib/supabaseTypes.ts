@@ -104,6 +104,7 @@ export type Database = {
       device_model: {
         Row: {
           datasheet_url: string | null
+          distinguishing_features: string[]
           example_images: string[]
           id: string
           manufacturer: string | null
@@ -113,6 +114,7 @@ export type Database = {
         }
         Insert: {
           datasheet_url?: string | null
+          distinguishing_features?: string[]
           example_images?: string[]
           id?: string
           manufacturer?: string | null
@@ -122,6 +124,7 @@ export type Database = {
         }
         Update: {
           datasheet_url?: string | null
+          distinguishing_features?: string[]
           example_images?: string[]
           id?: string
           manufacturer?: string | null

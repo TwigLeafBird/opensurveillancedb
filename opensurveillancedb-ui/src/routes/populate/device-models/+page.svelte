@@ -7,6 +7,7 @@
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
 	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
 	import ImageGalleryHoverPreview from '$lib/ImageGalleryHoverPreview.svelte';
+	import TextListHoverPreview from '$lib/TextListHoverPreview.svelte';
 	import { sanitizeHref } from '$lib/url';
 	import ErrorSnackbar from '$lib/ErrorSnackbar.svelte';
 	import { getErrorMessage } from '$lib/errors';
@@ -47,6 +48,7 @@
 			shape_profile_id?: string | null;
 			datasheet_url?: string | null;
 			product_url?: string | null;
+			distinguishing_features?: string[];
 			example_images?: string[] | null;
 			color_ids?: string[];
 			location_codes?: string[];
@@ -77,6 +79,7 @@
 		shape_profile: string | null;
 		datasheet_url: string | null;
 		product_url: string | null;
+		distinguishing_features: string[];
 		existing_example_images: string[];
 		new_example_image_files: File[];
 		color_ids: string[];
@@ -97,6 +100,7 @@
 						shape_profile: detail.shape_profile,
 						datasheet_url: detail.datasheet_url,
 						product_url: detail.product_url,
+						distinguishing_features: detail.distinguishing_features,
 						example_images: [...detail.existing_example_images, ...uploadedExampleImages],
 						color_ids: detail.color_ids,
 						location_codes: detail.location_codes
@@ -136,6 +140,7 @@
 						shape_profile: detail.shape_profile,
 						datasheet_url: detail.datasheet_url,
 						product_url: detail.product_url,
+						distinguishing_features: detail.distinguishing_features,
 						example_images: nextExampleImages,
 						color_ids: detail.color_ids,
 						location_codes: detail.location_codes
@@ -198,6 +203,7 @@
 			shape_profile_id: model.device_shape_profile?.id ?? model.shape_profile ?? null,
 			datasheet_url: model.datasheet_url ?? null,
 			product_url: model.product_url ?? null,
+			distinguishing_features: model.distinguishing_features ?? [],
 			example_images: model.example_images ?? [],
 			color_ids: (model.device_color_option ?? []).map((option) => option.color_id),
 			location_codes: (model.device_possible_location ?? []).map((option) => option.location_code)
@@ -280,6 +286,15 @@
 											ariaLabel={`Preview ${m.name} example images`}
 											panelLabel={`${m.name} example images`}
 											buttonLabel={String(exampleImageEntries.length)}
+											buttonClass="mt-0.5 flex-none"
+										/>
+									{/if}
+									{#if (m.distinguishing_features ?? []).length > 0}
+										<TextListHoverPreview
+											items={m.distinguishing_features ?? []}
+											ariaLabel={`Preview ${m.name} distinguishing features`}
+											panelLabel={`${m.name} distinguishing features`}
+											buttonLabel={String((m.distinguishing_features ?? []).length)}
 											buttonClass="mt-0.5 flex-none"
 										/>
 									{/if}

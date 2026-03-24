@@ -40,6 +40,7 @@ export async function createDeviceModel(input: {
     shape_profile?: string | null;
     datasheet_url?: string | null;
     product_url?: string | null;
+    distinguishing_features?: string[];
     example_images?: string[];
     color_ids?: string[];
     location_codes?: string[];
@@ -53,6 +54,7 @@ export async function createDeviceModel(input: {
             shape_profile: input.shape_profile ?? null,
             datasheet_url: input.datasheet_url ?? null,
             product_url: input.product_url ?? null,
+            distinguishing_features: input.distinguishing_features ?? [],
             example_images: input.example_images ?? []
         })
         .select<'device_model', DeviceModel>()
@@ -102,6 +104,7 @@ export async function updateDeviceModel(
         shape_profile?: string | null;
         datasheet_url?: string | null;
         product_url?: string | null;
+        distinguishing_features?: string[];
         example_images?: string[];
         color_ids?: string[];
         location_codes?: string[];
@@ -116,6 +119,7 @@ export async function updateDeviceModel(
             shape_profile: update.shape_profile ?? null,
             datasheet_url: update.datasheet_url ?? null,
             product_url: update.product_url ?? null,
+            distinguishing_features: update.distinguishing_features ?? [],
             example_images: update.example_images ?? []
         })
         .eq('id', originalId)

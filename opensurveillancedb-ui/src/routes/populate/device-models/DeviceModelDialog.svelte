@@ -19,6 +19,7 @@
 		shape_profile_id?: string | null;
 		datasheet_url?: string | null;
 		product_url?: string | null;
+		distinguishing_features?: string[];
 		example_images?: string[] | null;
 		color_ids?: string[];
 		location_codes?: string[];
@@ -31,6 +32,7 @@
 		shape_profile: string | null;
 		datasheet_url: string | null;
 		product_url: string | null;
+		distinguishing_features: string[];
 		existing_example_images: string[];
 		new_example_image_files: File[];
 		color_ids: string[];
@@ -64,6 +66,7 @@
 	let shapeProfileId = $state('');
 	let datasheetUrl = $state('');
 	let productUrl = $state('');
+	let distinguishingFeatureDrafts = $state<string[]>(['']);
 	let existingExampleImages = $state<string[]>([]);
 	let newExampleImageFiles = $state<PendingExampleImageFile[]>([]);
 	let exampleImageInputKey = $state(0);
@@ -103,6 +106,7 @@
 		shapeProfileId = '';
 		datasheetUrl = '';
 		productUrl = '';
+		distinguishingFeatureDrafts = [''];
 		existingExampleImages = [];
 		newExampleImageFiles = [];
 		exampleImageInputKey += 1;
@@ -120,6 +124,7 @@
 		shapeProfileId = '';
 		datasheetUrl = '';
 		productUrl = '';
+		distinguishingFeatureDrafts = [''];
 		existingExampleImages = [];
 		newExampleImageFiles = [];
 		exampleImageInputKey += 1;
@@ -137,6 +142,10 @@
 		shapeProfileId = deviceModel.shape_profile_id ?? '';
 		datasheetUrl = deviceModel.datasheet_url ?? '';
 		productUrl = deviceModel.product_url ?? '';
+		distinguishingFeatureDrafts =
+			deviceModel.distinguishing_features && deviceModel.distinguishing_features.length > 0
+				? [...deviceModel.distinguishing_features]
+				: [''];
 		existingExampleImages = [...(deviceModel.example_images ?? [])];
 		newExampleImageFiles = [];
 		exampleImageInputKey += 1;
@@ -186,6 +195,9 @@
 		const trimmedName = name.trim();
 		const trimmedDatasheet = datasheetUrl.trim();
 		const trimmedProduct = productUrl.trim();
+		const distinguishingFeatures = distinguishingFeatureDrafts
+			.map((detail) => detail.trim())
+			.filter((detail) => detail.length > 0);
 
 		if (!trimmedName) {
 			formError = 'Name is required.';
@@ -204,6 +216,7 @@
 				shape_profile: shapeProfileId || null,
 				datasheet_url: trimmedDatasheet || null,
 				product_url: trimmedProduct || null,
+				distinguishing_features: distinguishingFeatures,
 				existing_example_images: [...existingExampleImages],
 				new_example_image_files: newExampleImageFiles.map((pendingFile) => pendingFile.file),
 				color_ids: [...selectedColorIds],
@@ -215,6 +228,24 @@
 		} finally {
 			saving = false;
 		}
+	}
+
+	function addDistinguishingFeatureField() {
+		distinguishingFeatureDrafts = [...distinguishingFeatureDrafts, ''];
+	}
+
+	function updateDistinguishingFeature(index: number, value: string) {
+		distinguishingFeatureDrafts = distinguishingFeatureDrafts.map((detail, detailIndex) =>
+			detailIndex === index ? value : detail
+		);
+	}
+
+	function removeDistinguishingFeature(index: number) {
+		const nextDistinguishingFeatureDrafts = distinguishingFeatureDrafts.filter(
+			(_, detailIndex) => detailIndex !== index
+		);
+		distinguishingFeatureDrafts =
+			nextDistinguishingFeatureDrafts.length > 0 ? nextDistinguishingFeatureDrafts : [''];
 	}
 </script>
 
@@ -391,6 +422,39 @@
 							</label>
 						{/each}
 					{/if}
+				</div>
+			</div>
+
+			<div class="flex flex-col gap-2">
+				<div class="flex items-center justify-between gap-2">
+					<p class="m-0">Distinguishing Features</p>
+					<Button variant="outlined" onclick={addDistinguishingFeatureField} disabled={saving}>
+						<span class="mdc-button__label">Add Feature</span>
+					</Button>
+				</div>
+				<p class="m-0 text-sm opacity-80">
+					Add details that make this specific model unique from others that look similar.
+				</p>
+				<div class="flex flex-col gap-2">
+					{#each distinguishingFeatureDrafts as detail, index (`detail-${index}`)}
+						<div class="flex items-start gap-2">
+							<input
+								id={`device-model-distinguishing-feature-${index}`}
+								value={detail}
+								oninput={(event) =>
+									updateDistinguishingFeature(index, (event.currentTarget as HTMLInputElement).value)}
+								placeholder={`Distinguishing feature ${index + 1}`}
+								class="min-w-0 flex-1 rounded border border-current bg-transparent p-2 text-inherit caret-current"
+							/>
+							<Button
+								variant="outlined"
+								onclick={() => removeDistinguishingFeature(index)}
+								disabled={saving}
+							>
+								<span class="mdc-button__label">Remove</span>
+							</Button>
+						</div>
+					{/each}
 				</div>
 			</div>
 

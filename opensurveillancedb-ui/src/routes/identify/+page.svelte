@@ -2,18 +2,16 @@
 	import { browser } from '$app/environment';
 	import Button, { Label } from '@smui/button';
 	import { page } from '$app/state';
-	import DataTable, { Body, Cell, Head, Row } from '@smui/data-table';
 	import SelectionTile from '$lib/SelectionTile.svelte';
-	import ShapeIcon from '$lib/ShapeIcon.svelte';
-	import ColorSwatchList from '$lib/ColorSwatchList.svelte';
-	import ManufacturerIconList from '$lib/ManufacturerIconList.svelte';
-	import ImageGalleryHoverPreview from '$lib/ImageGalleryHoverPreview.svelte';
+	import { normalizeHexColor } from '$lib/color';
+	import DeviceResultsTable from './DeviceResultsTable.svelte';
+	import FilterSelectionGrid from './FilterSelectionGrid.svelte';
 	import {
-		getColorSwatchPublicUrl,
-		getManufacturerIconPublicUrl,
-		getModelExampleImagePublicUrl
-	} from '$lib/storage';
-	import { sanitizeHref } from '$lib/url';
+		buildSelectionUrl,
+		DEFAULT_FILTER_QUERY_KEYS,
+		parseSelectionStateFromParams
+	} from './filterSync';
+	import { getColorSwatchPublicUrl, getManufacturerIconPublicUrl } from '$lib/storage';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import type { PageData } from './$types';
 
@@ -40,10 +38,6 @@
 	let selectedColorCodes = $state<string[]>([]);
 	let syncingFromUrl = $state(false);
 
-	const QUERY_MANUFACTURER = 'manufacturer';
-	const QUERY_SHAPE = 'shape';
-	const QUERY_COLOR = 'color';
-
 	function toggleValue(values: string[], value: string): string[] {
 		return values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value];
 	}
@@ -60,37 +54,19 @@
 		selectedColorCodes = toggleValue(selectedColorCodes, code);
 	}
 
-	function parseMultiValueParam(params: URLSearchParams, key: string): string[] {
-		const repeatedValues = params.getAll(key).flatMap((value) => value.split(','));
-		const trimmedValues = repeatedValues.map((value) => value.trim()).filter(Boolean);
-		return [...new Set(trimmedValues)];
-	}
-
-	function parseSelectionState(params: URLSearchParams) {
-		const validManufacturerIds = new Set(manufacturers.map((manufacturer) => manufacturer.id));
-		const validShapeProfileIds = new Set(shapeProfiles.map((shapeProfile) => shapeProfile.id));
-		const validColorCodes = new Set(colors.map((color) => color.code));
-
-		const manufacturerIds = parseMultiValueParam(params, QUERY_MANUFACTURER).filter((id) =>
-			validManufacturerIds.has(id)
-		);
-		const shapeProfileIds = parseMultiValueParam(params, QUERY_SHAPE).filter((id) =>
-			validShapeProfileIds.has(id)
-		);
-		const colorCodes = parseMultiValueParam(params, QUERY_COLOR).filter((code) =>
-			validColorCodes.has(code)
-		);
-
-		return { manufacturerIds, shapeProfileIds, colorCodes };
-	}
-
 	$effect(() => {
 		if (!browser) {
 			return;
 		}
 
-		const { manufacturerIds, shapeProfileIds, colorCodes } = parseSelectionState(
-			page.url.searchParams
+		const { manufacturerIds, shapeProfileIds, colorCodes } = parseSelectionStateFromParams(
+			page.url.searchParams,
+			{
+				manufacturerIds: new Set(manufacturers.map((manufacturer) => manufacturer.id)),
+				shapeProfileIds: new Set(shapeProfiles.map((shapeProfile) => shapeProfile.id)),
+				colorCodes: new Set(colors.map((color) => color.code))
+			},
+			DEFAULT_FILTER_QUERY_KEYS
 		);
 
 		syncingFromUrl = true;
@@ -105,47 +81,23 @@
 			return;
 		}
 
-		const nextParams = new URLSearchParams(page.url.search);
-		nextParams.delete(QUERY_MANUFACTURER);
-		nextParams.delete(QUERY_SHAPE);
-		nextParams.delete(QUERY_COLOR);
-
-		for (const manufacturerId of selectedManufacturerIds) {
-			nextParams.append(QUERY_MANUFACTURER, manufacturerId);
-		}
-
-		for (const shapeProfileId of selectedShapeProfileIds) {
-			nextParams.append(QUERY_SHAPE, shapeProfileId);
-		}
-
-		for (const colorCode of selectedColorCodes) {
-			nextParams.append(QUERY_COLOR, colorCode);
-		}
-
-		const nextSearch = nextParams.toString();
-		const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`;
+		const nextUrl = buildSelectionUrl(
+			window.location.pathname,
+			page.url.search,
+			window.location.hash,
+			{
+				manufacturerIds: selectedManufacturerIds,
+				shapeProfileIds: selectedShapeProfileIds,
+				colorCodes: selectedColorCodes
+			},
+			DEFAULT_FILTER_QUERY_KEYS
+		);
 		const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
 
 		if (nextUrl !== currentUrl) {
 			window.history.replaceState(window.history.state, '', nextUrl);
 		}
 	});
-
-	function normalizeHexColor(value?: string | null): string | null {
-		if (!value) {
-			return null;
-		}
-
-		const trimmedValue = value.trim();
-		if (!trimmedValue) {
-			return null;
-		}
-
-		const candidate = trimmedValue.startsWith('#') ? trimmedValue : `#${trimmedValue}`;
-		return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(candidate)
-			? candidate
-			: null;
-	}
 
 	function clearSelections() {
 		selectedManufacturerIds = [];
@@ -180,63 +132,61 @@
 
 <div class="flex flex-col gap-6 p-6">
 	<section class="flex flex-col gap-6">
-		<div class="flex flex-col gap-3">
-			<div class="w-fit">
-				<Button variant="outlined" onclick={clearSelections}>
-					<Label>Clear selections</Label>
-				</Button>
-			</div>
-			<p class="m-0 text-base leading-5 font-semibold">Manufacturer</p>
-			<div class="grid [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))] gap-4">
-				{#each manufacturers as manufacturer (manufacturer.id)}
-					{@const primaryLogoUrl = getManufacturerIconPublicUrl(manufacturer.icons?.[0] ?? null)}
-					<SelectionTile
-						label={manufacturer.name}
-						hideLabel={!!primaryLogoUrl}
-						imageSrc={primaryLogoUrl}
-						imageAlt={manufacturer.name}
-						selected={selectedManufacturerIds.includes(manufacturer.id)}
-						onclick={() => toggleManufacturer(manufacturer.id)}
-					/>
-				{/each}
-			</div>
+		<div class="w-fit">
+			<Button variant="outlined" onclick={clearSelections}>
+				<Label>Clear selections</Label>
+			</Button>
 		</div>
 
-		<div style="display:flex; flex-direction:column; gap:0.75rem;">
-			<p class="m-0 text-base leading-5 font-semibold">Shape Profile</p>
-			<div
-				style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
-			>
-				{#each shapeProfiles as shapeProfile (shapeProfile.id)}
-					<SelectionTile
-						label={shapeProfile.short_name}
-						iconFilename={shapeProfile.icon ?? null}
-						selected={selectedShapeProfileIds.includes(shapeProfile.id)}
-						onclick={() => toggleShapeProfile(shapeProfile.id)}
-					/>
-				{/each}
-			</div>
-		</div>
+		<FilterSelectionGrid title="Manufacturer">
+			{#each manufacturers as manufacturer (manufacturer.id)}
+				{@const primaryLogoUrl = getManufacturerIconPublicUrl(manufacturer.icons?.[0] ?? null)}
+				<SelectionTile
+					label={manufacturer.name}
+					hideLabel={!!primaryLogoUrl}
+					imageSrc={primaryLogoUrl}
+					imageAlt={manufacturer.name}
+					selected={selectedManufacturerIds.includes(manufacturer.id)}
+					onclick={() => toggleManufacturer(manufacturer.id)}
+				/>
+			{/each}
+		</FilterSelectionGrid>
 
-		<div style="display:flex; flex-direction:column; gap:0.75rem;">
-			<p class="m-0 text-base leading-5 font-semibold">Color</p>
-			<div
-				style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
-			>
-				{#each colors as color (color.code)}
-					{@const hexColor = normalizeHexColor(color.hex_code)}
-					{@const swatchIconUrl = getColorSwatchPublicUrl(color.swatch_icon)}
-					<SelectionTile
-						label={color.name}
-						colorHex={hexColor}
-						imageSrc={hexColor ? null : swatchIconUrl}
-						imageAlt={color.name}
-						selected={selectedColorCodes.includes(color.code)}
-						onclick={() => toggleColor(color.code)}
-					/>
-				{/each}
-			</div>
-		</div>
+		<FilterSelectionGrid
+			title="Shape Profile"
+			wrapperClass="flex flex-col"
+			gridClass=""
+			gridStyle="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
+		>
+			{#each shapeProfiles as shapeProfile (shapeProfile.id)}
+				<SelectionTile
+					label={shapeProfile.short_name}
+					iconFilename={shapeProfile.icon ?? null}
+					selected={selectedShapeProfileIds.includes(shapeProfile.id)}
+					onclick={() => toggleShapeProfile(shapeProfile.id)}
+				/>
+			{/each}
+		</FilterSelectionGrid>
+
+		<FilterSelectionGrid
+			title="Color"
+			wrapperClass="flex flex-col"
+			gridClass=""
+			gridStyle="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;"
+		>
+			{#each colors as color (color.code)}
+				{@const hexColor = normalizeHexColor(color.hex_code)}
+				{@const swatchIconUrl = getColorSwatchPublicUrl(color.swatch_icon)}
+				<SelectionTile
+					label={color.name}
+					colorHex={hexColor}
+					imageSrc={hexColor ? null : swatchIconUrl}
+					imageAlt={color.name}
+					selected={selectedColorCodes.includes(color.code)}
+					onclick={() => toggleColor(color.code)}
+				/>
+			{/each}
+		</FilterSelectionGrid>
 	</section>
 
 	<section style="display:flex; flex-direction:column; gap:0.75rem;">
@@ -260,141 +210,6 @@
 			</div>
 		</div>
 
-		{#if filteredDeviceInfos.length === 0}
-			<p><em>No matching device models found.</em></p>
-		{:else}
-			<div style="overflow:auto">
-				<DataTable
-					table$aria-label="Possible device model results"
-					style="width: 100%; table-layout: fixed;"
-				>
-					<Head>
-						<Row>
-							<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>Name</Cell
-							>
-							<Cell style="width:10%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>Manufacturer</Cell
-							>
-							<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>Shape Profile</Cell
-							>
-							<Cell style="width:12%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>Colors</Cell
-							>
-							<Cell style="width:15%; white-space:normal;">Possible Locations</Cell>
-							<Cell style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>Datasheet</Cell
-							>
-							<Cell style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>Product</Cell
-							>
-						</Row>
-					</Head>
-
-					<Body>
-						{#each filteredDeviceInfos as deviceInfo (deviceInfo.id)}
-							{@const exampleImageEntries = (deviceInfo.example_images ?? []).flatMap((filename, index) => {
-								const url = getModelExampleImagePublicUrl(filename);
-								return url
-									? [{
-											src: url,
-											alt: `${deviceInfo.name} example image ${index + 1}`,
-											key: `${deviceInfo.id}-${filename}-${index}`
-									  }]
-									: [];
-							})}
-							<Row>
-								<Cell
-									style="width:20%; white-space:normal; overflow:hidden; text-overflow:ellipsis;"
-								>
-									<div style="display:flex; flex-direction:column; gap:0.25rem; min-width:0;">
-										<div
-											style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.5rem; min-width:0;"
-										>
-											<strong
-												style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.95rem; min-width:0; flex:1;"
-												>{deviceInfo.name}</strong
-											>
-											{#if exampleImageEntries.length > 0}
-												<ImageGalleryHoverPreview
-													images={exampleImageEntries}
-													ariaLabel={`Preview ${deviceInfo.name} example images`}
-													panelLabel={`${deviceInfo.name} example images`}
-													buttonLabel={String(exampleImageEntries.length)}
-													buttonClass="mt-0.5 flex-none"
-												/>
-											{/if}
-										</div>
-										<code style="font-size:0.7rem; opacity:0.8;">{deviceInfo.id}</code>
-									</div>
-								</Cell>
-								<Cell style="width:10%;">
-									<ManufacturerIconList
-										icons={deviceInfo.manufacturer?.icons ?? []}
-										manufacturerName={deviceInfo.manufacturer?.name ?? 'Manufacturer'}
-										emptyText={deviceInfo.manufacturer?.name ?? '-'}
-									/>
-								</Cell>
-								<Cell>
-									<div style="display:flex; align-items:center; gap:8px; min-width:0;">
-										<ShapeIcon
-											filename={deviceInfo.device_shape_profile?.icon ?? null}
-											alt={deviceInfo.device_shape_profile?.short_name ?? ''}
-											size={40}
-										/>
-										<span style="flex:1; min-width:0; white-space:normal; word-break:break-word;">
-											{deviceInfo.device_shape_profile?.short_name ??
-												deviceInfo.shape_profile ??
-												'-'}
-										</span>
-									</div>
-								</Cell>
-								<Cell
-									style="width:12%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>
-									<ColorSwatchList colorOptions={deviceInfo.device_color_option ?? []} />
-								</Cell>
-								<Cell style="width:15%; white-space:normal;">
-									{#if deviceInfo.device_possible_location && deviceInfo.device_possible_location.length > 0}
-										{deviceInfo.device_possible_location
-											.map((location) => location?.device_location?.name ?? location?.location_code)
-											.join(', ')}
-									{:else}
-										-
-									{/if}
-								</Cell>
-								<Cell
-									style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>
-									{#if sanitizeHref(deviceInfo.datasheet_url)}
-										<a
-											href={sanitizeHref(deviceInfo.datasheet_url)}
-											target="_blank"
-											rel="noopener noreferrer">link</a
-										>
-									{:else}
-										-
-									{/if}
-								</Cell>
-								<Cell
-									style="width:5%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-								>
-									{#if sanitizeHref(deviceInfo.product_url)}
-										<a
-											href={sanitizeHref(deviceInfo.product_url)}
-											target="_blank"
-											rel="noopener noreferrer">link</a
-										>
-									{:else}
-										-
-									{/if}
-								</Cell>
-							</Row>
-						{/each}
-					</Body>
-				</DataTable>
-			</div>
-		{/if}
+		<DeviceResultsTable deviceInfos={filteredDeviceInfos} />
 	</section>
 </div>

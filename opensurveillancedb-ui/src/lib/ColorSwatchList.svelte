@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '$lib/hex-swatch-border.css';
+	import { normalizeHexColor } from '$lib/color';
 	import { getColorSwatchPublicUrl } from '$lib/storage';
 
 	type ColorOptionEntry = {
@@ -16,22 +17,6 @@
 	};
 
 	let { colorOptions = [] }: Props = $props();
-
-	function normalizeHexColor(value?: string | null): string | null {
-		if (!value) {
-			return null;
-		}
-
-		const trimmedValue = value.trim();
-		if (!trimmedValue) {
-			return null;
-		}
-
-		const candidate = trimmedValue.startsWith('#') ? trimmedValue : `#${trimmedValue}`;
-		return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(candidate)
-			? candidate
-			: null;
-	}
 
 	const colorVisuals = $derived(
 		(colorOptions ?? [])

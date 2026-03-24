@@ -257,14 +257,21 @@
 					{@const exampleImageEntries = (m.example_images ?? []).flatMap((filename, index) => {
 						const url = getModelExampleImagePublicUrl(filename);
 						return url
-							? [{ src: url, alt: `${m.name} example image ${index + 1}`, key: `${m.id}-${filename}-${index}` }]
+							? [
+									{
+										src: url,
+										alt: `${m.name} example image ${index + 1}`,
+										key: `${m.id}-${filename}-${index}`
+									}
+								]
 							: [];
 					})}
 					<Row>
 						<Cell class="w-[20%] overflow-hidden">
 							<div class="flex min-w-0 flex-col gap-1">
 								<div class="flex min-w-0 items-start justify-between gap-2">
-									<strong class="min-w-0 flex-1 overflow-hidden text-[0.95rem] text-ellipsis whitespace-nowrap"
+									<strong
+										class="min-w-0 flex-1 overflow-hidden text-[0.95rem] text-ellipsis whitespace-nowrap"
 										>{m.name}</strong
 									>
 									{#if exampleImageEntries.length > 0}

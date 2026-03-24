@@ -6,6 +6,7 @@
 	import IconButton from '@smui/icon-button';
 	import CircularProgress from '@smui/circular-progress';
 	import { createDeviceColor, deleteDeviceColor, updateDeviceColor } from '$lib/supabaseClient';
+	import { normalizeHexColor } from '$lib/color';
 	import {
 		deleteColorSwatchFile,
 		getColorSwatchPublicUrl,
@@ -38,22 +39,6 @@
 	let deletingCode = $state<string | null>(null);
 	let editingCode = $state<string | null>(null);
 	let creatingPending = $state(false);
-
-	function normalizeHexColor(value?: string | null): string | null {
-		if (!value) {
-			return null;
-		}
-
-		const trimmedValue = value.trim();
-		if (!trimmedValue) {
-			return null;
-		}
-
-		const candidate = trimmedValue.startsWith('#') ? trimmedValue : `#${trimmedValue}`;
-		return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(candidate)
-			? candidate
-			: null;
-	}
 
 	function showError(error: unknown, fallback: string) {
 		const message = getErrorMessage(error, fallback);
@@ -264,27 +249,27 @@
 					</Row>
 				{/each}
 				{#if creatingPending}
-					<Row>
-						<Cell>
-							<CircularProgress class="h-8 w-8" indeterminate /></Cell
-						>
-						<Cell>
-							<CircularProgress class="h-8 w-8" indeterminate /></Cell
-						>
-						<Cell>
-							<CircularProgress class="h-8 w-8" indeterminate /></Cell
-						>
-						<Cell>
-							<CircularProgress class="h-8 w-8" indeterminate /></Cell
-						>
-						{#if canEdit}
+						<Row>
 							<Cell>
-								<CircularProgress class="h-8 w-8" indeterminate />
-							</Cell>
-						{/if}
-					</Row>
+								<CircularProgress class="h-8 w-8" indeterminate /></Cell
+							>
+							<Cell>
+								<CircularProgress class="h-8 w-8" indeterminate /></Cell
+							>
+							<Cell>
+								<CircularProgress class="h-8 w-8" indeterminate /></Cell
+							>
+							<Cell>
+								<CircularProgress class="h-8 w-8" indeterminate /></Cell
+							>
+							{#if canEdit}
+								<Cell>
+									<CircularProgress class="h-8 w-8" indeterminate />
+								</Cell>
+							{/if}
+						</Row>
 				{/if}
 			</Body>
 		</DataTable>
 	</div>
-{/if}
+	{/if}

@@ -177,12 +177,16 @@
 		position: fixed;
 		display: none;
 		z-index: 9999;
-		max-width: min(28rem, calc(100vw - 1.5rem));
+		width: max-content;
+		min-width: 16rem;
+		max-width: min(42rem, calc(100vw - 1.5rem));
 		max-height: min(24rem, calc(100vh - 1.5rem));
-		overflow: auto;
+		overflow-y: auto;
+		overflow-x: hidden;
 		padding: 0.9rem 1rem;
 		border-radius: 0.85rem;
 		background: #f5f5f5;
+		color: #1f1f1f;
 		border: 1px solid color-mix(in srgb, black 15%, transparent);
 		box-shadow: 0 12px 30px color-mix(in srgb, black 35%, transparent);
 	}
@@ -191,6 +195,8 @@
 		margin: 0 0 0.6rem;
 		font-size: 0.9rem;
 		font-weight: 700;
+		line-height: 1.3;
+		overflow-wrap: anywhere;
 	}
 
 	.text-list-hover-list {
@@ -203,7 +209,7 @@
 
 	.text-list-hover-list li {
 		line-height: 1.35;
-		word-break: break-word;
+		overflow-wrap: anywhere;
 	}
 
 	@media (prefers-color-scheme: dark) {

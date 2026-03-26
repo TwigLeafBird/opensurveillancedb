@@ -292,8 +292,8 @@
 									{#if (m.distinguishing_features ?? []).length > 0}
 										<TextListHoverPreview
 											items={m.distinguishing_features ?? []}
-											ariaLabel={`Preview ${m.name} distinguishing features`}
-											panelLabel={`${m.name} distinguishing features`}
+											ariaLabel={`Preview distinguishing features for ${m.name}`}
+											panelLabel={`Distinguishing features for ${m.name}`}
 											buttonLabel={String((m.distinguishing_features ?? []).length)}
 											buttonClass="mt-0.5 flex-none"
 										/>

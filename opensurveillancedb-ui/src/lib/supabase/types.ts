@@ -9,6 +9,8 @@ export type DevicePossibleLocation =
 export type DeviceShapeProfile = Database[typeof SchemaName]['Tables']['device_shape_profile']['Row'];
 export type DeviceManufacturer = Database[typeof SchemaName]['Tables']['device_manufacturer']['Row'];
 export type DeviceColorOption = Database[typeof SchemaName]['Tables']['device_color_option']['Row'];
+export type DefiningCharacteristic =
+    Database[typeof SchemaName]['Tables']['defining_characteristic']['Row'];
 
 export type DeviceInfo = Omit<DeviceModel, 'manufacturer'> & {
     manufacturer?: DeviceManufacturer | null;
@@ -17,4 +19,10 @@ export type DeviceInfo = Omit<DeviceModel, 'manufacturer'> & {
         DevicePossibleLocation & { device_location?: DeviceLocation | null }
     > | null;
     device_shape_profile?: DeviceShapeProfile | null;
+    device_model_defining_characteristic?: Array<{
+        characteristic_id: number;
+        defining_characteristic?: DefiningCharacteristic | null;
+    }> | null;
+    /** Computed from device_model_defining_characteristic */
+    distinguishing_features?: string[];
 };

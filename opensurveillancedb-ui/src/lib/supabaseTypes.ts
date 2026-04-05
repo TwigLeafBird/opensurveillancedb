@@ -35,6 +35,21 @@ export type Database = {
         }
         Relationships: []
       }
+      defining_characteristic: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       device_color_option: {
         Row: {
           color_id: string
@@ -104,7 +119,6 @@ export type Database = {
       device_model: {
         Row: {
           datasheet_url: string | null
-          distinguishing_features: string[]
           example_images: string[]
           id: string
           manufacturer: string | null
@@ -114,7 +128,6 @@ export type Database = {
         }
         Insert: {
           datasheet_url?: string | null
-          distinguishing_features?: string[]
           example_images?: string[]
           id?: string
           manufacturer?: string | null
@@ -124,7 +137,6 @@ export type Database = {
         }
         Update: {
           datasheet_url?: string | null
-          distinguishing_features?: string[]
           example_images?: string[]
           id?: string
           manufacturer?: string | null
@@ -145,6 +157,36 @@ export type Database = {
             columns: null
             isOneToOne: false
             referencedRelation: "device_shape_profile"
+            referencedColumns: null
+          },
+        ]
+      }
+      device_model_defining_characteristic: {
+        Row: {
+          characteristic_id: number
+          model_id: string
+        }
+        Insert: {
+          characteristic_id: number
+          model_id: string
+        }
+        Update: {
+          characteristic_id?: number
+          model_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_model_defining_characteristic_characteristic_id_fkey"
+            columns: null
+            isOneToOne: false
+            referencedRelation: "defining_characteristic"
+            referencedColumns: null
+          },
+          {
+            foreignKeyName: "device_model_defining_characteristic_model_id_fkey"
+            columns: null
+            isOneToOne: false
+            referencedRelation: "device_model"
             referencedColumns: null
           },
         ]

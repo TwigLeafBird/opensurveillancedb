@@ -83,9 +83,19 @@ export function getIconPublicUrl(filename?: string | null): string | null {
     return null;
 }
 
+const ALLOWED_IMAGE_EXTENSIONS_RE = /\.(png|jpe?g|gif|svg)$/i;
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/svg+xml'
+]);
+
 export function validateImageFile(file?: File | null): boolean {
     if (!file || !file.name) return false;
-    return S3_FILENAME_RE.test(file.name);
+    const hasValidExtension = ALLOWED_IMAGE_EXTENSIONS_RE.test(file.name);
+    const hasValidMime = !file.type || ALLOWED_IMAGE_MIME_TYPES.has(file.type);
+    return hasValidExtension && hasValidMime;
 }
 
 export async function uploadIconFile(file: File, shapeProfileName: string): Promise<string> {

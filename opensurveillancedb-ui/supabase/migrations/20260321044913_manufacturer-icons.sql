@@ -50,3 +50,40 @@ DO $$ BEGIN
   TO authenticated
   USING ((bucket_id = 'brand_logos'::text));
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  create policy "Allow authenticated deletes from manufacturer_icons"
+  on "storage"."objects"
+  as permissive
+  for delete
+  to authenticated
+  using ((bucket_id = 'manufacturer_icons'::text));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  create policy "Allow authenticated updates in manufacturer_icons"
+  on "storage"."objects"
+  as permissive
+  for update
+  to authenticated
+  using ((bucket_id = 'manufacturer_icons'::text))
+  with check ((bucket_id = 'manufacturer_icons'::text));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  create policy "Allow authenticated uploads to manufacturer_icons"
+  on "storage"."objects"
+  as permissive
+  for insert
+  to authenticated
+  with check ((bucket_id = 'manufacturer_icons'::text));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  create policy "Allow public reads from manufacturer_icons"
+  on "storage"."objects"
+  as permissive
+  for select
+  to public
+  using ((bucket_id = 'manufacturer_icons'::text));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

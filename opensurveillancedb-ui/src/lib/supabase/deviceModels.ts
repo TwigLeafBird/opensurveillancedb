@@ -22,7 +22,7 @@ export async function listDeviceModels(
 
 export async function listDeviceInfos(client: SupabaseClient<Database> = supabase): Promise<DeviceInfo[]> {
     const selectQuery =
-        '*, manufacturer (*), device_color_option (*, color (*)), device_possible_location (*, device_location (*)), device_shape_profile (*)';
+        '*, manufacturer (*), device_color_option (*, color (*)), device_possible_location (*, device_location (*)), device_shape_profile (*), device_model_defining_characteristic (characteristic_id, defining_characteristic (id, name))';
 
     const { data, error } = await client.schema(SchemaName).from('device_model').select(selectQuery);
 
@@ -31,7 +31,12 @@ export async function listDeviceInfos(client: SupabaseClient<Database> = supabas
         return [];
     }
 
-    return data ?? [];
+    return (data ?? []).map((item) => ({
+        ...item,
+        distinguishing_features: (item.device_model_defining_characteristic ?? [])
+            .map((dc: { characteristic_id: number; defining_characteristic?: { id: number; name: string } | null }) => dc.defining_characteristic?.name ?? null)
+            .filter((name: string | null): name is string => name !== null)
+    }));
 }
 
 export async function createDeviceModel(input: {
@@ -54,7 +59,6 @@ export async function createDeviceModel(input: {
             shape_profile: input.shape_profile ?? null,
             datasheet_url: input.datasheet_url ?? null,
             product_url: input.product_url ?? null,
-            distinguishing_features: input.distinguishing_features ?? [],
             example_images: input.example_images ?? []
         })
         .select<'device_model', DeviceModel>()
@@ -62,6 +66,29 @@ export async function createDeviceModel(input: {
 
     if (error) {
         throw new Error(error.message);
+    }
+
+    const featureNames = input.distinguishing_features ?? [];
+    const { error: deleteCharError } = await supabase
+        .schema(SchemaName)
+        .from('device_model_defining_characteristic')
+        .delete()
+        .eq('model_id', data.id);
+    if (deleteCharError) throw new Error(deleteCharError.message);
+
+    if (featureNames.length > 0) {
+        const { data: chars, error: upsertCharError } = await supabase
+            .schema(SchemaName)
+            .from('defining_characteristic')
+            .upsert(featureNames.map((name) => ({ name })), { onConflict: 'name' })
+            .select('id');
+        if (upsertCharError) throw new Error(upsertCharError.message);
+
+        const { error: linkError } = await supabase
+            .schema(SchemaName)
+            .from('device_model_defining_characteristic')
+            .insert((chars ?? []).map((c) => ({ model_id: data.id, characteristic_id: c.id })));
+        if (linkError) throw new Error(linkError.message);
     }
 
     const colorIds = input.color_ids ?? [];
@@ -119,7 +146,6 @@ export async function updateDeviceModel(
             shape_profile: update.shape_profile ?? null,
             datasheet_url: update.datasheet_url ?? null,
             product_url: update.product_url ?? null,
-            distinguishing_features: update.distinguishing_features ?? [],
             example_images: update.example_images ?? []
         })
         .eq('id', originalId)
@@ -128,6 +154,29 @@ export async function updateDeviceModel(
 
     if (error) {
         throw new Error(error.message);
+    }
+
+    const featureNames = update.distinguishing_features ?? [];
+    const { error: deleteCharError } = await supabase
+        .schema(SchemaName)
+        .from('device_model_defining_characteristic')
+        .delete()
+        .eq('model_id', originalId);
+    if (deleteCharError) throw new Error(deleteCharError.message);
+
+    if (featureNames.length > 0) {
+        const { data: chars, error: upsertCharError } = await supabase
+            .schema(SchemaName)
+            .from('defining_characteristic')
+            .upsert(featureNames.map((name) => ({ name })), { onConflict: 'name' })
+            .select('id');
+        if (upsertCharError) throw new Error(upsertCharError.message);
+
+        const { error: linkError } = await supabase
+            .schema(SchemaName)
+            .from('device_model_defining_characteristic')
+            .insert((chars ?? []).map((c) => ({ model_id: originalId, characteristic_id: c.id })));
+        if (linkError) throw new Error(linkError.message);
     }
 
     const { error: deleteColorError } = await supabase

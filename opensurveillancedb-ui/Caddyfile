@@ -1,0 +1,6 @@
+{$DOMAIN} {
+  encode zstd gzip
+
+  # Reverse proxy to the UI container bound on localhost.
+  reverse_proxy {$APP_UPSTREAM}
+}

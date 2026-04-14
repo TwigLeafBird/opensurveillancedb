@@ -1,4 +1,4 @@
-{$DOMAIN} {
+{$DOMAIN} {$WWW_DOMAIN} {
   encode zstd gzip
 
   # Reverse proxy to the UI container bound on localhost.

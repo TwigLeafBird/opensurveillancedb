@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import Button, { Label } from '@smui/button';
 	import IconButton from '@smui/icon-button';
+	import { mdiGithub } from '@mdi/js';
 	import Drawer, { Content } from '@smui/drawer';
 	import List, { Item, Text } from '@smui/list';
 	import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar';
@@ -156,6 +157,19 @@
 				<Title>opensurveillancedb</Title>
 			</Section>
 			<Section align="end" class="gap-2 pr-4">
+				<a
+					href="https://github.com/twigleafbird/opensurveillancedb"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="flex items-center gap-1 px-2 text-sm font-medium tracking-wider uppercase no-underline transition-opacity hover:opacity-80"
+					style="color: white"
+					aria-label="GitHub repository"
+				>
+					<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+						<path d={mdiGithub} />
+					</svg>
+					GitHub
+				</a>
 				<IconButton
 					class="material-icons"
 					onclick={toggleTheme}

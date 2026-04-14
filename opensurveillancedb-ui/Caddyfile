@@ -4,3 +4,8 @@
   # Reverse proxy to the UI container bound on localhost.
   reverse_proxy {$APP_UPSTREAM}
 }
+
+# Redirect alternate domain to primary, with Caddy handling TLS automatically.
+{$REDIRECT_DOMAIN} {$WWW_REDIRECT_DOMAIN} {
+  redir https://{$DOMAIN}{uri} permanent
+}

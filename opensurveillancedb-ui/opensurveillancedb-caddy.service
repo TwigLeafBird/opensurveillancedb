@@ -14,10 +14,12 @@ TimeoutStartSec=0
 # Set these for your deployment.
 Environment=DOMAIN=opensurveillancedb.com
 Environment=WWW_DOMAIN=www.opensurveillancedb.com
+Environment=REDIRECT_DOMAIN=os-db.com
+Environment=WWW_REDIRECT_DOMAIN=www.os-db.com
 Environment=APP_UPSTREAM=127.0.0.1:8080
 
 # Note: %h resolves to the home of the systemd manager (root), not User=osdb, so we use the absolute path instead.
-ExecStart=/usr/bin/docker run --rm --name opensurveillancedb-caddy --network host --restart=no -v /home/osdb/opensurveillancedb/opensurveillancedb-ui/Caddyfile:/etc/caddy/Caddyfile:ro -v /home/osdb/.local/share/caddy/data:/data -v /home/osdb/.local/share/caddy/config:/config -e DOMAIN=${DOMAIN} -e WWW_DOMAIN=${WWW_DOMAIN} -e APP_UPSTREAM=${APP_UPSTREAM} caddy:2-alpine
+ExecStart=/usr/bin/docker run --rm --name opensurveillancedb-caddy --network host --restart=no -v /home/osdb/opensurveillancedb/opensurveillancedb-ui/Caddyfile:/etc/caddy/Caddyfile:ro -v /home/osdb/.local/share/caddy/data:/data -v /home/osdb/.local/share/caddy/config:/config -e DOMAIN=${DOMAIN} -e WWW_DOMAIN=${WWW_DOMAIN} -e REDIRECT_DOMAIN=${REDIRECT_DOMAIN} -e WWW_REDIRECT_DOMAIN=${WWW_REDIRECT_DOMAIN} -e APP_UPSTREAM=${APP_UPSTREAM} caddy:2-alpine
 ExecStop=-/usr/bin/docker stop --time 20 opensurveillancedb-caddy
 
 [Install]

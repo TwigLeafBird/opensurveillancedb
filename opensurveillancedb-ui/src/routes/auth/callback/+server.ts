@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY } from '$env/static/public';
+import { env } from '$env/dynamic/public';
+const { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY } = env;
 
 function sanitizeNext(next: string | null): string {
     if (!next || !next.startsWith('/') || next.startsWith('//')) {

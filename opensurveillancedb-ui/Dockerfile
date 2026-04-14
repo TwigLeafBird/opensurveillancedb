@@ -2,6 +2,8 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
+# Placeholder values so Vite can resolve $env/dynamic/public imports at build time.
+# Real values are injected at runtime via --env-file in the systemd service.
 ARG PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
 ARG PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=placeholder-public-key
 ENV PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL}

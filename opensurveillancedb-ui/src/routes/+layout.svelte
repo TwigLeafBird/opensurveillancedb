@@ -149,7 +149,10 @@
 	}
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+	<title>opensurveillancedb</title>
+	<link rel="icon" href={favicon} />
+</svelte:head>
 <div class="flex h-screen flex-col">
 	<TopAppBar variant="static">
 		<Row>

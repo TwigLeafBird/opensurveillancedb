@@ -5,7 +5,11 @@
 	import Checkbox from '@smui/checkbox';
 	import ImageHoverPreview from '$lib/ImageHoverPreview.svelte';
 	import ShapeIcon from '$lib/ShapeIcon.svelte';
-	import { getModelExampleImagePublicUrl, validateImageFile } from '$lib/storage';
+	import {
+		getModelExampleImagePublicUrl,
+		getModelProductImagePublicUrl,
+		validateImageFile
+	} from '$lib/storage';
 
 	type DialogMode = 'create' | 'edit';
 	type ManufacturerOption = { id: string; name: string };
@@ -21,6 +25,7 @@
 		product_url?: string | null;
 		distinguishing_features?: string[];
 		example_images?: string[] | null;
+		product_images?: string[] | null;
 		color_ids?: string[];
 		location_codes?: string[];
 	};
@@ -35,6 +40,8 @@
 		distinguishing_features: string[];
 		existing_example_images: string[];
 		new_example_image_files: File[];
+		existing_product_images: string[];
+		new_product_image_files: File[];
 		color_ids: string[];
 		location_codes: string[];
 	};
@@ -70,6 +77,9 @@
 	let existingExampleImages = $state<string[]>([]);
 	let newExampleImageFiles = $state<PendingExampleImageFile[]>([]);
 	let exampleImageInputKey = $state(0);
+	let existingProductImages = $state<string[]>([]);
+	let newProductImageFiles = $state<PendingExampleImageFile[]>([]);
+	let productImageInputKey = $state(0);
 	let selectedColorIds = $state<string[]>([]);
 	let selectedLocationCodes = $state<string[]>([]);
 	let saving = $state(false);
@@ -90,14 +100,36 @@
 		}))
 	]);
 
+	const productImageItems = $derived([
+		...existingProductImages.map((filename) => ({
+			key: `existing:${filename}`,
+			filename,
+			isExisting: true,
+			previewUrl: getModelProductImagePublicUrl(filename)
+		})),
+		...newProductImageFiles.map((pendingFile, index) => ({
+			key: `new:${index}`,
+			filename: pendingFile.file.name,
+			isExisting: false,
+			previewUrl: pendingFile.previewUrl
+		}))
+	]);
+
 	function revokePendingExampleImagePreviews() {
 		for (const pendingFile of newExampleImageFiles) {
 			URL.revokeObjectURL(pendingFile.previewUrl);
 		}
 	}
 
+	function revokePendingProductImagePreviews() {
+		for (const pendingFile of newProductImageFiles) {
+			URL.revokeObjectURL(pendingFile.previewUrl);
+		}
+	}
+
 	function reset() {
 		revokePendingExampleImagePreviews();
+		revokePendingProductImagePreviews();
 		open = false;
 		mode = 'create';
 		originalId = '';
@@ -110,6 +142,9 @@
 		existingExampleImages = [];
 		newExampleImageFiles = [];
 		exampleImageInputKey += 1;
+		existingProductImages = [];
+		newProductImageFiles = [];
+		productImageInputKey += 1;
 		selectedColorIds = [];
 		selectedLocationCodes = [];
 		saving = false;
@@ -128,6 +163,9 @@
 		existingExampleImages = [];
 		newExampleImageFiles = [];
 		exampleImageInputKey += 1;
+		existingProductImages = [];
+		newProductImageFiles = [];
+		productImageInputKey += 1;
 		selectedColorIds = [];
 		selectedLocationCodes = [];
 		formError = '';
@@ -149,6 +187,9 @@
 		existingExampleImages = [...(deviceModel.example_images ?? [])];
 		newExampleImageFiles = [];
 		exampleImageInputKey += 1;
+		existingProductImages = [...(deviceModel.product_images ?? [])];
+		newProductImageFiles = [];
+		productImageInputKey += 1;
 		selectedColorIds = [...(deviceModel.color_ids ?? [])];
 		selectedLocationCodes = [...(deviceModel.location_codes ?? [])];
 		formError = '';
@@ -179,6 +220,30 @@
 		exampleImageInputKey += 1;
 	}
 
+	function onProductImageFilesChange(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const selectedFiles = Array.from(input.files ?? []);
+
+		if (selectedFiles.length === 0) {
+			return;
+		}
+
+		const invalidFile = selectedFiles.find((file) => !validateImageFile(file));
+		if (invalidFile) {
+			formError = 'All product images must be PNG, JPG, JPEG, GIF, or SVG images.';
+			return;
+		}
+
+		newProductImageFiles = [
+			...newProductImageFiles,
+			...selectedFiles.map((file) => ({
+				file,
+				previewUrl: URL.createObjectURL(file)
+			}))
+		];
+		productImageInputKey += 1;
+	}
+
 	function removeExistingExampleImage(filename: string) {
 		existingExampleImages = existingExampleImages.filter((entry) => entry !== filename);
 	}
@@ -189,6 +254,18 @@
 			URL.revokeObjectURL(pendingFile.previewUrl);
 		}
 		newExampleImageFiles = newExampleImageFiles.filter((_, itemIndex) => itemIndex !== index);
+	}
+
+	function removeExistingProductImage(filename: string) {
+		existingProductImages = existingProductImages.filter((entry) => entry !== filename);
+	}
+
+	function removeNewProductImage(index: number) {
+		const pendingFile = newProductImageFiles[index];
+		if (pendingFile) {
+			URL.revokeObjectURL(pendingFile.previewUrl);
+		}
+		newProductImageFiles = newProductImageFiles.filter((_, itemIndex) => itemIndex !== index);
 	}
 
 	async function save() {
@@ -219,6 +296,8 @@
 				distinguishing_features: distinguishingFeatures,
 				existing_example_images: [...existingExampleImages],
 				new_example_image_files: newExampleImageFiles.map((pendingFile) => pendingFile.file),
+				existing_product_images: [...existingProductImages],
+				new_product_image_files: newProductImageFiles.map((pendingFile) => pendingFile.file),
 				color_ids: [...selectedColorIds],
 				location_codes: [...selectedLocationCodes]
 			});
@@ -329,6 +408,65 @@
 				placeholder="https://..."
 				class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
 			/>
+
+			<label for="device-model-product-images">Upload Product Images</label>
+			{#key productImageInputKey}
+				<input
+					id="device-model-product-images"
+					type="file"
+					multiple
+					accept=".png,.jpg,.jpeg,.gif,.svg,image/png,image/jpeg,image/gif,image/svg+xml"
+					onchange={onProductImageFilesChange}
+					class="rounded border border-current bg-transparent p-2 text-inherit caret-current"
+				/>
+			{/key}
+
+			{#if productImageItems.length > 0}
+				<p class="m-0 text-sm opacity-80">Product images are shown in a horizontal scroller.</p>
+				<div class="overflow-x-auto rounded border border-current/30 p-2">
+					<div class="flex min-w-max gap-3">
+						{#each productImageItems as item (item.key)}
+							<div
+								class="flex w-36 min-w-36 flex-shrink-0 flex-col items-center gap-2 rounded border border-current/30 p-2"
+							>
+								{#if item.previewUrl}
+									<ImageHoverPreview
+										src={item.previewUrl}
+										alt={`${name || 'Device model'} product image`}
+										ariaLabel={`Preview ${item.filename}`}
+										thumbnailWidth={96}
+										thumbnailHeight={96}
+										previewWidth={512}
+										previewHeight={512}
+										thumbnailFrameClass="example-image-frame"
+										thumbnailImageClass="h-24 w-24 object-contain"
+										previewImageClass="max-h-[30rem] max-w-[30rem] object-contain"
+									/>
+								{:else}
+									<div
+										class="example-image-frame flex h-24 w-24 items-center justify-center rounded-md text-center text-[11px] leading-tight opacity-70"
+									>
+										no preview
+									</div>
+								{/if}
+								<div class="w-full text-center text-xs break-all opacity-80">{item.filename}</div>
+								<Button
+									variant="outlined"
+									onclick={() => {
+										if (item.isExisting) {
+											removeExistingProductImage(item.filename);
+										} else {
+											removeNewProductImage(Number(item.key.replace('new:', '')));
+										}
+									}}
+								>
+									<span class="mdc-button__label">Remove</span>
+								</Button>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
 			<label for="device-model-example-images">Upload Example Images</label>
 			{#key exampleImageInputKey}
@@ -442,7 +580,10 @@
 								id={`device-model-distinguishing-feature-${index}`}
 								value={detail}
 								oninput={(event) =>
-									updateDistinguishingFeature(index, (event.currentTarget as HTMLInputElement).value)}
+									updateDistinguishingFeature(
+										index,
+										(event.currentTarget as HTMLInputElement).value
+									)}
 								placeholder={`Distinguishing feature ${index + 1}`}
 								class="min-w-0 flex-1 rounded border border-current bg-transparent p-2 text-inherit caret-current"
 							/>

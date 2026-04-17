@@ -9,6 +9,8 @@ export const MANUFACTURER_ICON_BUCKET = 'brand_logos';
 export const MANUFACTURER_ICON_FOLDER = '';
 export const MODEL_EXAMPLE_IMAGE_BUCKET = 'model_example_images';
 export const MODEL_EXAMPLE_IMAGE_FOLDER = '';
+export const MODEL_PRODUCT_IMAGE_BUCKET = 'product_images';
+export const MODEL_PRODUCT_IMAGE_FOLDER = '';
 
 // S3-compliant filename validation: alphanumerics, dot, underscore, hyphen with image extension
 const S3_FILENAME_RE = /^[a-zA-Z0-9._-]+\.(png|jpe?g|gif|svg)$/i;
@@ -430,6 +432,93 @@ export async function listModelExampleImageFilenames(): Promise<string[]> {
             .filter((name): name is string => !!name);
     } catch (e) {
         console.error('Error listing model example image filenames', e);
+        return [];
+    }
+}
+
+export function getModelProductImagePublicUrl(filename?: string | null): string | null {
+    const valid = validateFilename(filename);
+    if (!valid) return null;
+    const path = buildStoragePath(valid, MODEL_PRODUCT_IMAGE_FOLDER);
+    try {
+        const { data } = supabase.storage.from(MODEL_PRODUCT_IMAGE_BUCKET).getPublicUrl(path);
+        if (data && (data as any).publicUrl) return (data as any).publicUrl as string;
+    } catch (e) {
+        console.error('Error getting public url for', path, e);
+    }
+    return null;
+}
+
+export async function uploadModelProductImageFile(file: File, modelName: string): Promise<string> {
+    if (!validateImageFile(file)) {
+        throw new Error('Please choose a PNG, JPG, JPEG, GIF, or SVG image.');
+    }
+
+    if (!modelName.trim()) {
+        throw new Error('Device model name is required to name the product image file.');
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ext) {
+        throw new Error('Invalid image filename.');
+    }
+
+    const existingFilenames = await listModelProductImageFilenames();
+    const generatedName = buildUniqueIconFilename(modelName, ext, existingFilenames);
+    const validName = validateFilename(generatedName);
+    if (!validName) {
+        throw new Error('Failed to generate a valid product image filename.');
+    }
+
+    const path = buildStoragePath(validName, MODEL_PRODUCT_IMAGE_FOLDER);
+    const { error } = await supabase.storage.from(MODEL_PRODUCT_IMAGE_BUCKET).upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined
+    });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return validName;
+}
+
+export async function deleteModelProductImageFile(filename?: string | null): Promise<void> {
+    const validName = validateFilename(filename);
+    if (!validName) {
+        return;
+    }
+
+    const path = buildStoragePath(validName, MODEL_PRODUCT_IMAGE_FOLDER);
+    const { error } = await supabase.storage.from(MODEL_PRODUCT_IMAGE_BUCKET).remove([path]);
+
+    if (error) {
+        throw new Error(error.message);
+    }
+}
+
+export async function listModelProductImageFilenames(): Promise<string[]> {
+    const folder = (MODEL_PRODUCT_IMAGE_FOLDER ?? '').trim();
+    const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+
+    try {
+        const { data, error } = await supabase.storage.from(MODEL_PRODUCT_IMAGE_BUCKET).list(cleanFolder, {
+            limit: 1000,
+            offset: 0,
+            sortBy: { column: 'name', order: 'asc' }
+        });
+
+        if (error) {
+            console.error('Error listing model product image filenames:', error.message);
+            return [];
+        }
+
+        return (data ?? [])
+            .map((entry) => validateFilename(entry.name))
+            .filter((name): name is string => !!name);
+    } catch (e) {
+        console.error('Error listing model product image filenames', e);
         return [];
     }
 }

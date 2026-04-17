@@ -14,6 +14,7 @@
 		panelClass?: string;
 		imageClass?: string;
 		cardClass?: string;
+		icon?: string;
 	};
 
 	let {
@@ -24,7 +25,8 @@
 		buttonClass = '',
 		panelClass = '',
 		imageClass = '',
-		cardClass = ''
+		cardClass = '',
+		icon = 'photo_library'
 	}: Props = $props();
 
 	let triggerRef = $state<HTMLButtonElement | null>(null);
@@ -118,7 +120,7 @@
 
 		positionPreview(triggerRef);
 	}
-	</script>
+</script>
 
 <svelte:window onscroll={handleViewportChange} onresize={handleViewportChange} />
 
@@ -131,7 +133,7 @@
 	onmouseenter={() => scheduleOpenPreview()}
 	onmouseleave={scheduleHide}
 >
-	<span class="material-icons image-gallery-hover-trigger-icon" aria-hidden="true">photo_library</span>
+	<span class="material-icons image-gallery-hover-trigger-icon" aria-hidden="true">{icon}</span>
 	<span class="image-gallery-hover-trigger-label">{buttonLabel}</span>
 </button>
 

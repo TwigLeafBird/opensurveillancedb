@@ -123,6 +123,7 @@ export type Database = {
           id: string
           manufacturer: string | null
           name: string
+          product_images: string[]
           product_url: string | null
           shape_profile: string | null
         }
@@ -132,6 +133,7 @@ export type Database = {
           id?: string
           manufacturer?: string | null
           name: string
+          product_images?: string[]
           product_url?: string | null
           shape_profile?: string | null
         }
@@ -141,6 +143,7 @@ export type Database = {
           id?: string
           manufacturer?: string | null
           name?: string
+          product_images?: string[]
           product_url?: string | null
           shape_profile?: string | null
         }

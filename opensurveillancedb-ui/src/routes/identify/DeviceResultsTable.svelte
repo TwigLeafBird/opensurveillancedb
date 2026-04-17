@@ -5,7 +5,7 @@
 	import ManufacturerIconList from '$lib/ManufacturerIconList.svelte';
 	import ImageGalleryHoverPreview from '$lib/ImageGalleryHoverPreview.svelte';
 	import TextListHoverPreview from '$lib/TextListHoverPreview.svelte';
-	import { getModelExampleImagePublicUrl } from '$lib/storage';
+	import { getModelExampleImagePublicUrl, getModelProductImagePublicUrl } from '$lib/storage';
 	import { sanitizeHref } from '$lib/url';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 
@@ -20,7 +20,10 @@
 	<p><em>No matching device models found.</em></p>
 {:else}
 	<div style="overflow:auto">
-		<DataTable table$aria-label="Possible device model results" style="width: 100%; table-layout: fixed;">
+		<DataTable
+			table$aria-label="Possible device model results"
+			style="width: 100%; table-layout: fixed;"
+		>
 			<Head>
 				<Row>
 					<Cell style="width:20%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
@@ -47,16 +50,34 @@
 
 			<Body>
 				{#each deviceInfos as deviceInfo (deviceInfo.id)}
-					{@const exampleImageEntries = (deviceInfo.example_images ?? []).flatMap((filename, index) => {
-						const url = getModelExampleImagePublicUrl(filename);
-						return url
-							? [{
-									src: url,
-									alt: `${deviceInfo.name} example image ${index + 1}`,
-									key: `${deviceInfo.id}-${filename}-${index}`
-							  }]
-							: [];
-					})}
+					{@const exampleImageEntries = (deviceInfo.example_images ?? []).flatMap(
+						(filename, index) => {
+							const url = getModelExampleImagePublicUrl(filename);
+							return url
+								? [
+										{
+											src: url,
+											alt: `${deviceInfo.name} example image ${index + 1}`,
+											key: `${deviceInfo.id}-${filename}-${index}`
+										}
+									]
+								: [];
+						}
+					)}
+					{@const productImageEntries = (deviceInfo.product_images ?? []).flatMap(
+						(filename, index) => {
+							const url = getModelProductImagePublicUrl(filename);
+							return url
+								? [
+										{
+											src: url,
+											alt: `${deviceInfo.name} product image ${index + 1}`,
+											key: `${deviceInfo.id}-product-${filename}-${index}`
+										}
+									]
+								: [];
+						}
+					)}
 					<Row>
 						<Cell style="width:20%; white-space:normal; overflow:hidden; text-overflow:ellipsis;">
 							<div style="display:flex; flex-direction:column; gap:0.25rem; min-width:0;">
@@ -74,6 +95,17 @@
 											panelLabel={`${deviceInfo.name} example images`}
 											buttonLabel={String(exampleImageEntries.length)}
 											buttonClass="mt-0.5 flex-none"
+											icon="domain"
+										/>
+									{/if}
+									{#if productImageEntries.length > 0}
+										<ImageGalleryHoverPreview
+											images={productImageEntries}
+											ariaLabel={`Preview ${deviceInfo.name} product images`}
+											panelLabel={`${deviceInfo.name} product images`}
+											buttonLabel={String(productImageEntries.length)}
+											buttonClass="mt-0.5 flex-none"
+											icon="photo_camera"
 										/>
 									{/if}
 									{#if (deviceInfo.distinguishing_features ?? []).length > 0}

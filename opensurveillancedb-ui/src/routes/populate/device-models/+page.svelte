@@ -15,7 +15,10 @@
 	import {
 		deleteModelExampleImageFile,
 		getModelExampleImagePublicUrl,
-		uploadModelExampleImageFile
+		uploadModelExampleImageFile,
+		deleteModelProductImageFile,
+		getModelProductImagePublicUrl,
+		uploadModelProductImageFile
 	} from '$lib/storage';
 	import type { DeviceInfo } from '$lib/supabaseClient';
 	import DeviceModelDialog from './DeviceModelDialog.svelte';
@@ -50,6 +53,7 @@
 			product_url?: string | null;
 			distinguishing_features?: string[];
 			example_images?: string[] | null;
+			product_images?: string[] | null;
 			color_ids?: string[];
 			location_codes?: string[];
 		}) => void;
@@ -82,6 +86,8 @@
 		distinguishing_features: string[];
 		existing_example_images: string[];
 		new_example_image_files: File[];
+		existing_product_images: string[];
+		new_product_image_files: File[];
 		color_ids: string[];
 		location_codes: string[];
 	}) {
@@ -89,9 +95,13 @@
 			if (detail.mode === 'create') {
 				creatingPending = true;
 				const uploadedExampleImages: string[] = [];
+				const uploadedProductImages: string[] = [];
 				try {
 					for (const file of detail.new_example_image_files) {
 						uploadedExampleImages.push(await uploadModelExampleImageFile(file, detail.name));
+					}
+					for (const file of detail.new_product_image_files) {
+						uploadedProductImages.push(await uploadModelProductImageFile(file, detail.name));
 					}
 
 					await createDeviceModel({
@@ -102,6 +112,7 @@
 						product_url: detail.product_url,
 						distinguishing_features: detail.distinguishing_features,
 						example_images: [...detail.existing_example_images, ...uploadedExampleImages],
+						product_images: [...detail.existing_product_images, ...uploadedProductImages],
 						color_ids: detail.color_ids,
 						location_codes: detail.location_codes
 					});
@@ -110,6 +121,13 @@
 					for (const uploadedExampleImage of uploadedExampleImages) {
 						try {
 							await deleteModelExampleImageFile(uploadedExampleImage);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					for (const uploadedProductImage of uploadedProductImages) {
+						try {
+							await deleteModelProductImageFile(uploadedProductImage);
 						} catch {
 							// no-op cleanup failure
 						}
@@ -125,14 +143,20 @@
 
 				editingId = detail.originalId;
 				const uploadedExampleImages: string[] = [];
+				const uploadedProductImages: string[] = [];
 				const existingModel = deviceInfos.find((deviceInfo) => deviceInfo.id === detail.originalId);
 				const currentExampleImages = existingModel?.example_images ?? [];
+				const currentProductImages = existingModel?.product_images ?? [];
 				try {
 					for (const file of detail.new_example_image_files) {
 						uploadedExampleImages.push(await uploadModelExampleImageFile(file, detail.name));
 					}
+					for (const file of detail.new_product_image_files) {
+						uploadedProductImages.push(await uploadModelProductImageFile(file, detail.name));
+					}
 
 					const nextExampleImages = [...detail.existing_example_images, ...uploadedExampleImages];
+					const nextProductImages = [...detail.existing_product_images, ...uploadedProductImages];
 
 					await updateDeviceModel(detail.originalId, {
 						name: detail.name,
@@ -142,6 +166,7 @@
 						product_url: detail.product_url,
 						distinguishing_features: detail.distinguishing_features,
 						example_images: nextExampleImages,
+						product_images: nextProductImages,
 						color_ids: detail.color_ids,
 						location_codes: detail.location_codes
 					});
@@ -156,11 +181,28 @@
 							// no-op cleanup failure
 						}
 					}
+					const removedProductImages = currentProductImages.filter(
+						(filename) => !nextProductImages.includes(filename)
+					);
+					for (const removedProductImage of removedProductImages) {
+						try {
+							await deleteModelProductImageFile(removedProductImage);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
 					await invalidateAll();
 				} catch (error) {
 					for (const uploadedExampleImage of uploadedExampleImages) {
 						try {
 							await deleteModelExampleImageFile(uploadedExampleImage);
+						} catch {
+							// no-op cleanup failure
+						}
+					}
+					for (const uploadedProductImage of uploadedProductImages) {
+						try {
+							await deleteModelProductImageFile(uploadedProductImage);
 						} catch {
 							// no-op cleanup failure
 						}
@@ -205,6 +247,7 @@
 			product_url: model.product_url ?? null,
 			distinguishing_features: model.distinguishing_features ?? [],
 			example_images: model.example_images ?? [],
+			product_images: model.product_images ?? [],
 			color_ids: (model.device_color_option ?? []).map((option) => option.color_id),
 			location_codes: (model.device_possible_location ?? []).map((option) => option.location_code)
 		});
@@ -272,6 +315,18 @@
 								]
 							: [];
 					})}
+					{@const productImageEntries = (m.product_images ?? []).flatMap((filename, index) => {
+						const url = getModelProductImagePublicUrl(filename);
+						return url
+							? [
+									{
+										src: url,
+										alt: `${m.name} product image ${index + 1}`,
+										key: `${m.id}-product-${filename}-${index}`
+									}
+								]
+							: [];
+					})}
 					<Row>
 						<Cell class="w-[20%] overflow-hidden">
 							<div class="flex min-w-0 flex-col gap-1">
@@ -287,6 +342,17 @@
 											panelLabel={`${m.name} example images`}
 											buttonLabel={String(exampleImageEntries.length)}
 											buttonClass="mt-0.5 flex-none"
+											icon="domain"
+										/>
+									{/if}
+									{#if productImageEntries.length > 0}
+										<ImageGalleryHoverPreview
+											images={productImageEntries}
+											ariaLabel={`Preview ${m.name} product images`}
+											panelLabel={`${m.name} product images`}
+											buttonLabel={String(productImageEntries.length)}
+											buttonClass="mt-0.5 flex-none"
+											icon="photo_camera"
 										/>
 									{/if}
 									{#if (m.distinguishing_features ?? []).length > 0}
